@@ -1,0 +1,61 @@
+@model List<MetaAhorro>
+@{
+    ViewData["Title"] = "Ahorro";
+}
+<div class="topbar">
+    <div><h1>Metas de ahorro</h1><p>Seguimiento de objetivos</p></div>
+</div>
+
+<div class="grid-2">
+    @foreach (var m in Model)
+    {
+        <div class="card">
+            <div class="goal-card">
+                <div class="goal-icon"><i class="ti @m.Icono"></i></div>
+                <div><p class="goal-name">@m.Nombre</p><p class="goal-date">Meta: @m.FechaMeta.ToString("dd/MM/yy")</p></div>
+            </div>
+            <div class="bar-track"><div class="bar-fill mint" style="width:@(m.Porcentaje)%;"></div></div>
+            <div class="goal-footer">
+                <span class="goal-amount">@m.MontoActual.ToString("C") ahorrados</span>
+                <span>Meta @m.MontoObjetivo.ToString("C")</span>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="kpi navy kpi-total">
+    <div><p class="label">Ahorro total acumulado</p><p class="value mint kpi-total-value">@ViewBag.AhorroTotal.ToString("C")</p></div>
+    <i class="ti ti-piggy-bank kpi-total-icon"></i>
+</div>
+
+<form asp-controller="Ahorro" asp-action="Registrar" method="post" class="card-dark" style="margin-top:16px;">
+    <h2>Nueva meta</h2>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nombre</label>
+            <input name="Nombre" type="text" placeholder="Ej. Fondo de emergencia" />
+            <span class="field-error">@ViewData.ModelState["Nombre"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+        </div>
+        <div class="form-group">
+            <label>Monto objetivo</label>
+            <input name="MontoObjetivo" type="text" placeholder="$0.00" />
+            <span class="field-error">@ViewData.ModelState["MontoObjetivo"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group"><label>Fecha meta</label><input name="FechaMeta" type="date" /></div>
+        <div class="form-group">
+            <label>Ícono</label>
+            <select name="Icono">
+                <option value="ti-target">General</option>
+                <option value="ti-device-mobile">Teléfono</option>
+                <option value="ti-plane">Viaje</option>
+                <option value="ti-device-laptop">Laptop</option>
+                <option value="ti-car">Vehículo</option>
+            </select>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </div>
+</form>

@@ -1,0 +1,32 @@
+@model List<CategoriaPresupuesto>
+@{
+    ViewData["Title"] = "Presupuesto";
+    var total = Model.Sum(c => c.Limite);
+    var gastado = Model.Sum(c => c.Gastado);
+    var disponible = total - gastado;
+    var enAlerta = Model.Where(c => c.EnAlerta).ToList();
+}
+<div class="topbar">
+    <div><h1>Presupuesto mensual</h1><p>Julio 2026</p></div>
+</div>
+
+<div class="kpi-grid kpi-grid-3">
+    <div class="kpi navy"><p class="label">Presupuesto total</p><p class="value white">@total.ToString("C")</p></div>
+    <div class="kpi dark"><p class="label">Gastado</p><p class="value red">@gastado.ToString("C")</p></div>
+    <div class="kpi dark"><p class="label">Disponible</p><p class="value mint">@disponible.ToString("C")</p></div>
+</div>
+
+<div class="card">
+    @foreach (var c in Model)
+    {
+        <div class="bar-row">
+            <div class="labels"><span>@c.Nombre</span><span>@c.Gastado.ToString("C") / @c.Limite.ToString("C")</span></div>
+            <div class="bar-track"><div class="bar-fill @(c.EnAlerta ? "red" : "mint")" style="width:@(c.Porcentaje)%;"></div></div>
+        </div>
+    }
+</div>
+
+@foreach (var c in enAlerta)
+{
+    <div class="alert danger"><i class="ti ti-alert-triangle"></i>Has usado el @(c.Porcentaje)% del presupuesto de @c.Nombre.</div>
+}

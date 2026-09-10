@@ -1,0 +1,53 @@
+@model List<Deuda>
+@{
+    ViewData["Title"] = "Deudas";
+    var proximaAVencer = Model.Where(d => d.PorVencer).OrderBy(d => d.Vencimiento).FirstOrDefault();
+}
+<div class="topbar">
+    <div><h1>Deudas</h1><p>Control de pagos pendientes</p></div>
+</div>
+
+<div class="kpi-grid kpi-grid-2">
+    <div class="kpi navy"><p class="label">Deuda total pendiente</p><p class="value white">@ViewBag.DeudaTotal.ToString("C")</p></div>
+    <div class="kpi dark">
+        <p class="label">Próximo pago</p>
+        <p class="value red">
+            @if (proximaAVencer != null)
+            {
+                var dias = (int)(proximaAVencer.Vencimiento - DateTime.Now).TotalDays;
+                @($"En {dias} día(s)")
+            }
+            else
+            {
+                @:Sin pagos próximos
+            }
+        </p>
+    </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+    <table class="data">
+        <thead><tr><th>Deuda</th><th>Monto pendiente</th><th>Vencimiento</th><th>Interés</th><th>Estado</th></tr></thead>
+        <tbody>
+        @foreach (var d in Model)
+        {
+            <tr>
+                <td>@d.Nombre</td>
+                <td class="amount-neg">@d.MontoPendiente.ToString("C")</td>
+                <td>@d.Vencimiento.ToString("dd/MM/yy")</td>
+                <td>@d.InteresPorcentaje%</td>
+                <td>
+                    @if (d.PorVencer)
+                    {
+                        <span class="pill warn">Por vencer</span>
+                    }
+                    else
+                    {
+                        <span class="pill ok">Al día</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

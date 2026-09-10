@@ -1,0 +1,44 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<div class="topbar">
+    <div><h1>Hola, @Model.NombreUsuario</h1><p>@Model.PeriodoActual</p></div>
+    <div class="bell desktop-only"><i class="ti ti-bell"></i></div>
+</div>
+
+<div class="kpi-grid">
+    <div class="kpi navy"><p class="label">Saldo disponible</p><p class="value mint">@Model.SaldoDisponible.ToString("C")</p></div>
+    <div class="kpi dark"><p class="label">Ingresos del mes</p><p class="value white">@Model.TotalIngresos.ToString("C")</p></div>
+    <div class="kpi dark"><p class="label">Gastos del mes</p><p class="value red">@Model.TotalGastos.ToString("C")</p></div>
+    <div class="kpi dark"><p class="label">Ahorro mensual</p><p class="value mint">@Model.AhorroMensual.ToString("C")</p></div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Gastos por categoría</h2>
+        @{ var maxCategoria = Model.GastosPorCategoria.Count == 0 ? 1 : Model.GastosPorCategoria.Values.Max(); }
+        @foreach (var cat in Model.GastosPorCategoria)
+        {
+            var ancho = maxCategoria == 0 ? 0 : Math.Round((cat.Value / maxCategoria) * 100, 0);
+            <div class="bar-row">
+                <div class="labels"><span>@cat.Key</span><span>@cat.Value.ToString("C")</span></div>
+                <div class="bar-track"><div class="bar-fill mint" style="width:@(ancho)%;"></div></div>
+            </div>
+        }
+    </div>
+    <div class="card">
+        <h2>Últimos registros</h2>
+        <table class="data">
+            <tbody>
+                @foreach (var g in Model.UltimosGastos)
+                {
+                    <tr>
+                        <td>@g.Descripcion</td>
+                        <td style="text-align:right;" class="amount-neg">-@g.Monto.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

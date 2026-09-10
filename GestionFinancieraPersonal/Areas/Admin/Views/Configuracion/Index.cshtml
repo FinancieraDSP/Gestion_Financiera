@@ -1,0 +1,68 @@
+@model ConfiguracionSistema
+@{
+    ViewData["Title"] = "Configuración del sistema";
+}
+<div class="topbar">
+    <div><h1>Configuración del sistema</h1><p>Parámetros generales de la plataforma</p></div>
+    <div class="role-badge desktop-only"><i class="ti ti-shield-check"></i>Administrador</div>
+</div>
+
+<form asp-action="Guardar" method="post">
+    <div class="card">
+        <h2><i class="ti ti-bell-ringing" style="color:var(--mint);margin-right:6px;"></i>Alertas y notificaciones</h2>
+        <div class="settings-row">
+            <div><p class="settings-title">Umbral de alerta de presupuesto</p><p class="settings-sub">% de uso a partir del cual se notifica</p></div>
+            <input type="text" asp-for="UmbralAlertaPresupuesto" />
+        </div>
+        <div class="settings-row">
+            <div><p class="settings-title">Aviso de vencimiento de deudas</p><p class="settings-sub">Días de anticipación</p></div>
+            <input type="text" asp-for="DiasAvisoVencimientoDeudas" />
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><i class="ti ti-shield-lock" style="color:var(--mint);margin-right:6px;"></i>Seguridad y acceso</h2>
+        <div class="settings-row">
+            <div><p class="settings-title">Tiempo de sesión inactiva</p><p class="settings-sub">Minutos antes de cerrar sesión</p></div>
+            <input type="text" asp-for="MinutosSesionInactiva" />
+        </div>
+        <div class="settings-row">
+            <div><p class="settings-title">Intentos de acceso permitidos</p><p class="settings-sub">Antes de bloquear la cuenta</p></div>
+            <input type="text" asp-for="IntentosAccesoPermitidos" />
+        </div>
+    </div>
+
+    <div class="card-dark">
+        <h2><i class="ti ti-database" style="color:var(--mint);margin-right:6px;"></i>Mantenimiento</h2>
+        <div class="settings-row">
+            <span class="settings-title">Modo mantenimiento</span>
+            <button type="button" class="switch @(Model.ModoMantenimiento ? "on" : "off")"><span class="knob"></span></button>
+            <input type="hidden" asp-for="ModoMantenimiento" />
+        </div>
+        <div class="settings-row">
+            <span class="settings-title">Respaldo automático de base de datos</span>
+            <button type="button" class="switch @(Model.RespaldoAutomatico ? "on" : "off")"><span class="knob"></span></button>
+            <input type="hidden" asp-for="RespaldoAutomatico" />
+        </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <button type="reset" class="btn btn-ghost">Restaurar valores</button>
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    // Alterna visualmente los switches y sincroniza el input hidden antes de enviar.
+    document.querySelectorAll('.switch').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = btn.parentElement.querySelector('input[type="hidden"]');
+            var activo = btn.classList.contains('on');
+            btn.classList.toggle('on', !activo);
+            btn.classList.toggle('off', activo);
+            if (input) input.value = (!activo).toString();
+        });
+    });
+</script>
+}
