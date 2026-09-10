@@ -19,7 +19,7 @@ namespace GestionFinancieraPersonal.Controllers
             if (!ModelState.IsValid)
                 return View(modelo);
 
-            // Validación temporal mientras llega la BDD real de Jonathan.
+            // Validación temporal mientras llega la BDD real.
             if (modelo.Correo == "carlos@mail.com" && modelo.Contrasena == "1234")
             {
                 return RedirectToAction("Index", "Dashboard");
