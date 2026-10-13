@@ -1,0 +1,99 @@
+﻿@using GestionFinancieraPersonal.Entidades
+@using GestionFinancieraPersonal.Servicios
+@model MisCategoriasViewModel
+@{
+    ViewData["Title"] = "Categorías";
+    string Err(string campo) => ViewData.ModelState[campo]?.Errors.FirstOrDefault()?.ErrorMessage ?? "";
+    var f = Model.Formulario;
+    var idUsuario = User.ObtenerIdUsuario();
+}
+<div class="topbar">
+    <div><h1>Mis categorías</h1><p>Organiza tus ingresos y gastos a tu manera</p></div>
+</div>
+
+@if (TempData["Exito"] is string exito)
+{
+    <div class="alert success"><i class="ti ti-circle-check"></i>@exito</div>
+}
+@if (TempData["Error"] is string errorTemp)
+{
+    <div class="alert danger"><i class="ti ti-alert-circle"></i>@errorTemp</div>
+}
+
+<div class="card" style="padding:0;overflow:hidden;margin:12px 0 16px;">
+    <div class="data-scroll">
+        <table class="data">
+            <thead><tr><th>Nombre</th><th>Tipo</th><th>Origen</th><th style="text-align:right;">Acciones</th></tr></thead>
+            <tbody>
+            @foreach (var c in Model.Categorias)
+            {
+                var esPropia = c.IdUsuario == idUsuario;
+                <tr style="@(c.Estado ? "" : "opacity:.5;")">
+                    <td>
+                        <i class="ti ti-tag" style="color:var(--mint);margin-right:6px;"></i>@c.Nombre
+                        @if (!c.Estado) { <span style="font-size:10px;color:var(--text-muted);">(desactivada)</span> }
+                    </td>
+                    <td><span class="pill @(c.Tipo == "Gasto" ? "warn" : "ok")">@c.Tipo</span></td>
+                    <td>@(esPropia ? "Personal" : "General")</td>
+                    <td style="text-align:right;white-space:nowrap;">
+                        @if (esPropia)
+                        {
+                            <a asp-action="Editar" asp-route-id="@c.IdCategoria" style="color:var(--text-muted);margin-right:8px;" title="Editar"><i class="ti ti-pencil"></i></a>
+                            @if (c.Estado)
+                            {
+                                <form asp-action="Eliminar" asp-route-id="@c.IdCategoria" method="post" style="display:inline;"
+                                      onsubmit="return confirm('¿Eliminar esta categoría? Si ya tiene movimientos, solo se desactivará.');">
+                                    <button type="submit" class="btn-icon-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Reactivar" asp-route-id="@c.IdCategoria" method="post" style="display:inline;">
+                                    <button type="submit" class="btn-icon-danger" style="color:var(--mint);" title="Reactivar"><i class="ti ti-restore"></i></button>
+                                </form>
+                            }
+                        }
+                        else
+                        {
+                            <i class="ti ti-lock" style="color:var(--text-muted-2);" title="Categoría general (solo el administrador la modifica)"></i>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<form asp-controller="Categorias" asp-action="Crear" method="post" class="card-dark">
+    <h2>Crear mi propia categoría</h2>
+
+    @if (!string.IsNullOrEmpty(Err("")))
+    {
+        <div class="alert danger" style="margin-bottom:10px;"><i class="ti ti-alert-circle"></i>@Err("")</div>
+    }
+
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nombre</label>
+            <input name="Nombre" type="text" maxlength="100" placeholder="Ej. Mascotas, Gimnasio, Freelance" value="@f.Nombre" />
+            <span class="field-error">@Err("Nombre")</span>
+        </div>
+        <div class="form-group">
+            <label>Tipo</label>
+            <select name="Tipo">
+                <option value="Gasto" selected="@(f.Tipo == "Gasto")">Gasto</option>
+                <option value="Ingreso" selected="@(f.Tipo == "Ingreso")">Ingreso</option>
+            </select>
+            <span class="field-error">@Err("Tipo")</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Descripción (opcional)</label>
+        <input name="Descripcion" type="text" maxlength="200" placeholder="Para qué la usarás" value="@f.Descripcion" />
+        <span class="field-error">@Err("Descripcion")</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="submit" class="btn btn-primary">Crear categoría</button>
+    </div>
+</form>

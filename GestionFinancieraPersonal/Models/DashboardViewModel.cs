@@ -1,3 +1,4 @@
+using GestionFinancieraPersonal.Entidades;
 namespace GestionFinancieraPersonal.Models
 {
     public class DashboardViewModel

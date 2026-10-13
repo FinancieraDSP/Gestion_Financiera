@@ -14,6 +14,11 @@
         <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
 
         <form asp-controller="Account" asp-action="Login" method="post" novalidate>
+            <div class="login-tabs">
+                <label><input type="radio" asp-for="TipoAcceso" value="Usuario" />Usuario</label>
+                <label><input type="radio" asp-for="TipoAcceso" value="Administrador" />Administrador</label>
+            </div>
+
             <div class="form-group">
                 <label asp-for="Correo">Correo electrónico</label>
                 <input asp-for="Correo" type="text" placeholder="nombre@correo.com" />
@@ -31,6 +36,9 @@
             }
 
             <div class="login-forgot"><span>¿Olvidaste tu contraseña?</span></div>
+            <p class="login-subtitle" style="margin:14px 0 0;text-align:center;">
+                ¿No tienes cuenta? <a asp-action="Registro" style="color:var(--mint);">Regístrate</a>
+            </p>
             <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
         </form>
     </div>

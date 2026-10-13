@@ -15,6 +15,7 @@
         <a class="@EsActivo("Dashboard")" asp-controller="Dashboard" asp-action="Index"><i class="ti ti-layout-dashboard"></i>Dashboard</a>
         <a class="@EsActivo("Ingresos")" asp-controller="Ingresos" asp-action="Index"><i class="ti ti-arrow-down-left"></i>Ingresos</a>
         <a class="@EsActivo("Gastos")" asp-controller="Gastos" asp-action="Index"><i class="ti ti-arrow-up-right"></i>Gastos</a>
+        <a class="@EsActivo("Categorias")" asp-controller="Categorias" asp-action="Index"><i class="ti ti-tags"></i>Categorías</a>
         <a class="@EsActivo("Presupuesto")" asp-controller="Presupuesto" asp-action="Index"><i class="ti ti-chart-pie"></i>Presupuesto</a>
         <a class="@EsActivo("Ahorro")" asp-controller="Ahorro" asp-action="Index"><i class="ti ti-moneybag"></i>Ahorro</a>
         <a class="@EsActivo("Deudas")" asp-controller="Deudas" asp-action="Index"><i class="ti ti-credit-card"></i>Deudas</a>
@@ -22,6 +23,7 @@
     </nav>
 
     <div class="bottom">
+                <a class="@EsActivo("Perfil")" asp-controller="Perfil" asp-action="CambiarContrasena"><i class="ti ti-key"></i>Cambiar contraseña</a>
         <a asp-controller="Account" asp-action="Logout"><i class="ti ti-logout"></i>Cerrar sesión</a>
     </div>
 </aside>

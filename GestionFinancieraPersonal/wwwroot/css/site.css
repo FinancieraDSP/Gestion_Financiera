@@ -264,3 +264,78 @@ table.data tbody tr:last-child td { border-bottom: none; }
   .login-left { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 32px; }
   .login-right { flex: 1.2; display: flex; flex-direction: column; justify-content: center; padding: 40px 32px; }
 }
+
+/* Pestañas Usuario y Administrador del login */
+.login-tabs {
+    display: flex;
+    gap: 4px;
+    background: #F0F2F4;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 16px;
+}
+
+    .login-tabs label {
+        flex: 1;
+        text-align: center;
+        padding: 8px 0;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .login-tabs input {
+        display: none;
+    }
+
+    .login-tabs label:has(input:checked) {
+        background: #fff;
+        color: var(--navy);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+/* Mensaje de éxito y botón eliminar */
+.alert.success {
+    background: #E1F5EE;
+    border: 1px solid #B5E6D4;
+    color: #0F6E56;
+}
+
+.btn-icon-danger {
+    background: none;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 2px 6px;
+}
+
+.btn-icon-danger:hover {
+    opacity: 0.7;
+}
+
+/* Contador de notificaciones sobre la campana */
+.bell {
+    position: relative;
+    text-decoration: none;
+}
+
+.bell-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--red);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

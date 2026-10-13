@@ -12,6 +12,7 @@ namespace GestionFinancieraPersonal.Models
         [DataType(DataType.Password)]
         public string Contrasena { get; set; } = string.Empty;
 
+        public string TipoAcceso { get; set; } = "Usuario"; // Usuario o Administrador
         public string? MensajeError { get; set; }
     }
 }

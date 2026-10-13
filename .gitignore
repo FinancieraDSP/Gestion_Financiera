@@ -1,0 +1,13 @@
+# Visual Studio
+.vs/
+*.user
+
+# Compilación
+bin/
+obj/
+
+# Logs
+logs/
+
+# Variables de entorno
+.env

@@ -1,21 +1,46 @@
-@model List<Deuda>
+@using GestionFinancieraPersonal.Entidades
+@model DeudasViewModel
 @{
     ViewData["Title"] = "Deudas";
-    var proximaAVencer = Model.Where(d => d.PorVencer).OrderBy(d => d.Vencimiento).FirstOrDefault();
+    string Err(string campo) => ViewData.ModelState[campo]?.Errors.FirstOrDefault()?.ErrorMessage ?? "";
+    var nueva = Model.Nueva;
+    var pago = Model.Pago;
+
+    var proxima = Model.Deudas
+        .Where(d => d.Estado != "Pagada" && d.FechaVencimiento.HasValue && d.FechaVencimiento.Value.Date >= DateTime.Today)
+        .OrderBy(d => d.FechaVencimiento)
+        .FirstOrDefault();
+
+    string TextoEstado(Deuda d) =>
+        d.Estado == "Pagada" ? "Pagada" :
+        d.Estado == "Vencida" ? "Vencida" :
+        d.PorVencer ? "Por vencer" : d.Estado;
+
+    string ClaseEstado(Deuda d) =>
+        d.Estado == "Vencida" || (d.Estado != "Pagada" && d.PorVencer) ? "warn" : "ok";
 }
 <div class="topbar">
     <div><h1>Deudas</h1><p>Control de pagos pendientes</p></div>
 </div>
 
-<div class="kpi-grid kpi-grid-2">
-    <div class="kpi navy"><p class="label">Deuda total pendiente</p><p class="value white">@ViewBag.DeudaTotal.ToString("C")</p></div>
+@if (TempData["Exito"] is string exito)
+{
+    <div class="alert success"><i class="ti ti-circle-check"></i>@exito</div>
+}
+@if (TempData["Error"] is string errorTemp)
+{
+    <div class="alert danger"><i class="ti ti-alert-circle"></i>@errorTemp</div>
+}
+
+<div class="kpi-grid kpi-grid-2" style="margin-top:12px;">
+    <div class="kpi navy"><p class="label">Deuda total pendiente</p><p class="value white">@Model.DeudaTotal.ToString("C")</p></div>
     <div class="kpi dark">
         <p class="label">Próximo pago</p>
         <p class="value red">
-            @if (proximaAVencer != null)
+            @if (proxima != null)
             {
-                var dias = (int)(proximaAVencer.Vencimiento - DateTime.Now).TotalDays;
-                @($"En {dias} día(s)")
+                var dias = (proxima.FechaVencimiento!.Value.Date - DateTime.Today).Days;
+                @(dias == 0 ? "Hoy" : $"En {dias} día(s)")
             }
             else
             {
@@ -26,28 +51,141 @@
 </div>
 
 <div class="card" style="padding:0;overflow:hidden;">
-    <table class="data">
-        <thead><tr><th>Deuda</th><th>Monto pendiente</th><th>Vencimiento</th><th>Interés</th><th>Estado</th></tr></thead>
-        <tbody>
-        @foreach (var d in Model)
-        {
-            <tr>
-                <td>@d.Nombre</td>
-                <td class="amount-neg">@d.MontoPendiente.ToString("C")</td>
-                <td>@d.Vencimiento.ToString("dd/MM/yy")</td>
-                <td>@d.InteresPorcentaje%</td>
-                <td>
-                    @if (d.PorVencer)
-                    {
-                        <span class="pill warn">Por vencer</span>
-                    }
-                    else
-                    {
-                        <span class="pill ok">Al día</span>
-                    }
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
+    <div class="data-scroll">
+        <table class="data">
+            <thead><tr><th>Deuda</th><th>Total</th><th>Pendiente</th><th>Vencimiento</th><th>Interés</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var d in Model.Deudas)
+            {
+                <tr style="@(d.Estado == "Pagada" ? "opacity:.6;" : "")">
+                    <td>@d.Nombre<br /><span style="font-size:10.5px;color:var(--text-muted);">@d.Acreedor</span></td>
+                    <td>@d.MontoTotal.ToString("C")</td>
+                    <td class="amount-neg">@d.MontoPendiente.ToString("C")</td>
+                    <td>@(d.FechaVencimiento.HasValue ? d.FechaVencimiento.Value.ToString("dd/MM/yy") : "—")</td>
+                    <td>@d.TasaInteres%</td>
+                    <td><span class="pill @ClaseEstado(d)">@TextoEstado(d)</span></td>
+                    <td>
+                        @if (d.MontoPagado == 0)
+                        {
+                            <form asp-controller="Deudas" asp-action="Eliminar" asp-route-id="@d.IdDeuda" method="post" style="margin:0;"
+                                  onsubmit="return confirm('¿Eliminar esta deuda?');">
+                                <button type="submit" class="btn-icon-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (!Model.Deudas.Any())
+            {
+                <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:18px;">No tienes deudas registradas.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
 </div>
+
+@if (Model.PagosRecientes.Any())
+{
+    <div class="card" style="margin-top:16px;">
+        <h2>Últimos pagos</h2>
+        <table class="data">
+            <tbody>
+            @foreach (var p in Model.PagosRecientes)
+            {
+                <tr>
+                    <td>@p.Fecha.ToString("dd/MM/yy")</td>
+                    <td>@p.Deuda</td>
+                    <td style="color:var(--text-muted);">@p.Descripcion</td>
+                    <td class="amount-neg">-@p.Monto.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+<form asp-controller="Deudas" asp-action="Pagar" method="post" class="card-dark" style="margin-top:16px;">
+    <h2>Registrar pago</h2>
+    @if (!Model.DeudasPendientes.Any())
+    {
+        <p style="font-size:12px;color:var(--text-muted-2);margin:0;">No tienes deudas pendientes por pagar.</p>
+    }
+    else
+    {
+        <div class="form-row">
+            <div class="form-group">
+                <label>Deuda</label>
+                <select name="IdDeuda" asp-items="Model.DeudasPendientes"><option value="">Selecciona...</option></select>
+                <span class="field-error">@Err("IdDeuda")</span>
+            </div>
+            <div class="form-group">
+                <label>Pagar desde la cuenta</label>
+                <select name="IdCuenta" asp-items="Model.Cuentas"><option value="">Selecciona...</option></select>
+                <span class="field-error">@Err("IdCuenta")</span>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Monto</label>
+                <input name="Monto" type="number" step="0.01" min="0.01" placeholder="$0.00" value="@pago.Monto" />
+                <span class="field-error">@Err("Monto")</span>
+            </div>
+            <div class="form-group">
+                <label>Fecha del pago</label>
+                <input name="Fecha" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" value="@(pago.Fecha?.ToString("yyyy-MM-dd"))" />
+                <span class="field-error">@Err("Fecha")</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Descripción (opcional)</label>
+            <input name="Descripcion" type="text" maxlength="200" placeholder="Ej. Cuota de julio" value="@pago.Descripcion" />
+            <span class="field-error">@Err("Descripcion")</span>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Registrar pago</button>
+        </div>
+    }
+</form>
+
+<form asp-controller="Deudas" asp-action="Crear" method="post" class="card-dark" style="margin-top:16px;">
+    <h2>Nueva deuda</h2>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Nombre</label>
+            <input name="Nombre" type="text" maxlength="150" placeholder="Ej. Préstamo personal" value="@nueva.Nombre" />
+            <span class="field-error">@Err("Nombre")</span>
+        </div>
+        <div class="form-group">
+            <label>Acreedor</label>
+            <input name="Acreedor" type="text" maxlength="150" placeholder="Ej. Banco Agrícola" value="@nueva.Acreedor" />
+            <span class="field-error">@Err("Acreedor")</span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Monto total</label>
+            <input name="MontoTotal" type="number" step="0.01" min="0.01" placeholder="$0.00" value="@nueva.MontoTotal" />
+            <span class="field-error">@Err("MontoTotal")</span>
+        </div>
+        <div class="form-group">
+            <label>Interés (%)</label>
+            <input name="TasaInteres" type="number" step="0.01" min="0" max="100" placeholder="0" value="@nueva.TasaInteres" />
+            <span class="field-error">@Err("TasaInteres")</span>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <label>Fecha de inicio</label>
+            <input name="FechaInicio" type="date" value="@(nueva.FechaInicio?.ToString("yyyy-MM-dd"))" />
+            <span class="field-error">@Err("FechaInicio")</span>
+        </div>
+        <div class="form-group">
+            <label>Vencimiento (opcional)</label>
+            <input name="FechaVencimiento" type="date" value="@(nueva.FechaVencimiento?.ToString("yyyy-MM-dd"))" />
+            <span class="field-error">@Err("FechaVencimiento")</span>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="submit" class="btn btn-primary">Guardar deuda</button>
+    </div>
+</form>

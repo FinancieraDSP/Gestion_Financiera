@@ -1,24 +1,46 @@
-@model List<Ingreso>
+@using GestionFinancieraPersonal.Entidades
+@model MovimientosViewModel<Ingreso>
 @{
     ViewData["Title"] = "Ingresos";
+    string Err(string campo) => ViewData.ModelState[campo]?.Errors.FirstOrDefault()?.ErrorMessage ?? "";
+    var f = Model.Formulario;
 }
 <div class="topbar">
     <div><h1>Gestión de ingresos</h1><p>Registro de entradas de dinero</p></div>
 </div>
 
-<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px;">
+@if (TempData["Exito"] is string exito)
+{
+    <div class="alert success"><i class="ti ti-circle-check"></i>@exito</div>
+}
+@if (TempData["Error"] is string errorTemp)
+{
+    <div class="alert danger"><i class="ti ti-alert-circle"></i>@errorTemp</div>
+}
+
+<div class="card" style="padding:0;overflow:hidden;margin:12px 0 16px;">
     <table class="data">
-        <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Cuenta</th><th>Monto</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Cuenta</th><th>Monto</th><th></th></tr></thead>
         <tbody>
-        @foreach (var i in Model)
+        @foreach (var i in Model.Items)
         {
             <tr>
                 <td>@i.Fecha.ToString("dd/MM/yy")</td>
-                <td>@i.Categoria</td>
+                <td>@i.Categoria.Nombre</td>
                 <td>@i.Descripcion</td>
-                <td>@i.Cuenta</td>
+                <td>@i.Cuenta.Nombre</td>
                 <td class="amount-pos">+@i.Monto.ToString("C")</td>
+                <td>
+                    <form asp-controller="Ingresos" asp-action="Eliminar" asp-route-id="@i.IdIngreso" method="post"
+                          onsubmit="return confirm('¿Eliminar este ingreso? Se descontará de la cuenta.');" style="margin:0;">
+                        <button type="submit" class="btn-icon-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
+                    </form>
+                </td>
             </tr>
+        }
+        @if (!Model.Items.Any())
+        {
+            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:18px;">Aún no has registrado ingresos.</td></tr>
         }
         </tbody>
     </table>
@@ -26,29 +48,46 @@
 
 <form asp-controller="Ingresos" asp-action="Registrar" method="post" class="card-dark">
     <h2>Registrar nuevo ingreso</h2>
+
+    @if (!string.IsNullOrEmpty(Err("")))
+    {
+        <div class="alert danger" style="margin-bottom:10px;"><i class="ti ti-alert-circle"></i>@Err("")</div>
+    }
+
     <div class="form-row">
         <div class="form-group">
             <label>Monto</label>
-            <input name="Monto" type="text" placeholder="$0.00" />
-            <span class="field-error">@ViewData.ModelState["Monto"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+            <input name="Monto" type="number" step="0.01" min="0.01" placeholder="$0.00" value="@f.Monto" />
+            <span class="field-error">@Err("Monto")</span>
         </div>
-        <div class="form-group"><label>Fecha</label><input type="text" value="@DateTime.Now.ToString("dd/MM/yyyy")" disabled /></div>
+        <div class="form-group">
+            <label>Fecha</label>
+            <input name="Fecha" type="date" max="@DateTime.Today.ToString("yyyy-MM-dd")" value="@(f.Fecha?.ToString("yyyy-MM-dd"))" />
+            <span class="field-error">@Err("Fecha")</span>
+        </div>
     </div>
     <div class="form-row">
         <div class="form-group">
             <label>Categoría</label>
-            <select name="Categoria"><option>Salario</option><option>Freelance</option><option>Otros</option></select>
+            <select name="IdCategoria" asp-items="Model.Categorias"><option value="">Selecciona...</option></select>
+            <span class="field-error">@Err("IdCategoria")</span>
         </div>
         <div class="form-group">
             <label>Cuenta</label>
-            <select name="Cuenta"><option>Cuenta principal</option><option>Ahorros</option></select>
+            <select name="IdCuenta" asp-items="Model.Cuentas"><option value="">Selecciona...</option></select>
+            <span class="field-error">@Err("IdCuenta")</span>
         </div>
     </div>
     <div class="form-row">
         <div class="form-group">
             <label>Descripción</label>
-            <input name="Descripcion" type="text" placeholder="¿De dónde viene?" />
-            <span class="field-error">@ViewData.ModelState["Descripcion"]?.Errors.FirstOrDefault()?.ErrorMessage</span>
+            <input name="Descripcion" type="text" placeholder="¿De dónde viene?" value="@f.Descripcion" />
+            <span class="field-error">@Err("Descripcion")</span>
+        </div>
+        <div class="form-group">
+            <label>Origen (opcional)</label>
+            <input name="Detalle" type="text" placeholder="Ej. Empresa X" value="@f.Detalle" />
+            <span class="field-error">@Err("Detalle")</span>
         </div>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;">

@@ -1,39 +1,98 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using GestionFinancieraPersonal.Datos;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using GestionFinancieraPersonal.Models;
+using GestionFinancieraPersonal.Servicios;
 
 namespace GestionFinancieraPersonal.Controllers
 {
+    [Authorize(Roles = "Usuario")]
     public class AhorroController : Controller
     {
-        // GET: /Ahorro
-        public IActionResult Index()
+        private readonly AhorroService _ahorro;
+        private readonly MovimientoService _movimientos;
+
+        public AhorroController(AhorroService ahorro, MovimientoService movimientos)
         {
-            ViewBag.AhorroTotal = DatosSimulados.AhorroTotal;
-            return View(DatosSimulados.Metas);
+            _ahorro = ahorro;
+            _movimientos = movimientos;
         }
 
-        // POST: /Ahorro/Registrar
+        // GET: /Ahorro
+        public async Task<IActionResult> Index()
+        {
+            return View(await ConstruirVistaAsync(new MetaFormViewModel(), new AporteFormViewModel()));
+        }
+
+        // POST: /Ahorro/CrearMeta
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Registrar(MetaAhorro nuevaMeta)
+        public async Task<IActionResult> CrearMeta(MetaFormViewModel nuevaMeta)
         {
-            if (nuevaMeta.MontoObjetivo <= 0)
-                ModelState.AddModelError("MontoObjetivo", "La meta debe ser mayor a $0.00.");
-            if (string.IsNullOrWhiteSpace(nuevaMeta.Nombre))
-                ModelState.AddModelError("Nombre", "Este campo es obligatorio.");
-
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                ViewBag.AhorroTotal = DatosSimulados.AhorroTotal;
-                return View("Index", DatosSimulados.Metas);
+                var resultado = await _ahorro.CrearMetaAsync(User.ObtenerIdUsuario(), nuevaMeta);
+                if (resultado.Exito)
+                {
+                    TempData["Exito"] = $"Meta \"{nuevaMeta.Nombre.Trim()}\" creada.";
+                    return RedirectToAction(nameof(Index));
+                }
+                ModelState.AddModelError(resultado.Campo, resultado.Error!);
             }
+            return View("Index", await ConstruirVistaAsync(nuevaMeta, new AporteFormViewModel()));
+        }
 
-            nuevaMeta.Id = DatosSimulados.Metas.Count == 0 ? 1 : DatosSimulados.Metas.Max(m => m.Id) + 1;
-            nuevaMeta.MontoActual = 0;
-            if (string.IsNullOrWhiteSpace(nuevaMeta.Icono)) nuevaMeta.Icono = "ti-target";
-            DatosSimulados.Metas.Add(nuevaMeta);
-            return RedirectToAction("Index");
+        // POST: /Ahorro/Aportar
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Aportar(AporteFormViewModel aporte)
+        {
+            if (ModelState.IsValid)
+            {
+                var resultado = await _ahorro.AportarAsync(User.ObtenerIdUsuario(), aporte);
+                if (resultado.Exito)
+                {
+                    TempData["Exito"] = "Aporte registrado correctamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                ModelState.AddModelError(resultado.Campo, resultado.Error!);
+            }
+            return View("Index", await ConstruirVistaAsync(new MetaFormViewModel(), aporte));
+        }
+
+        // POST: /Ahorro/EliminarMeta/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarMeta(int id)
+        {
+            var (resultado, devuelto, cuenta) = await _ahorro.EliminarMetaAsync(User.ObtenerIdUsuario(), id);
+            if (!resultado.Exito) TempData["Error"] = resultado.Error;
+            else TempData["Exito"] = devuelto > 0
+                ? $"Meta eliminada. Se devolvieron {devuelto:C} a {cuenta}."
+                : "Meta eliminada.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        private async Task<AhorroViewModel> ConstruirVistaAsync(MetaFormViewModel nuevaMeta, AporteFormViewModel aporte)
+        {
+            var idUsuario = User.ObtenerIdUsuario();
+            var metas = await _ahorro.ObtenerMetasAsync(idUsuario);
+
+            return new AhorroViewModel
+            {
+                Metas = metas,
+                AhorroTotal = metas.Sum(m => m.MontoActual),
+                NuevaMeta = nuevaMeta,
+                Aporte = aporte,
+                Cuentas = await _movimientos.ObtenerCuentasAsync(idUsuario, aporte.IdCuenta),
+                MetasActivas = metas
+                    .Where(m => m.Estado == "Activa")
+                    .Select(m => new SelectListItem(
+                        $"{m.Nombre} (faltan {(m.MontoObjetivo - m.MontoActual):C})",
+                        m.IdMeta.ToString(),
+                        m.IdMeta == aporte.IdMeta))
+                    .ToList()
+            };
         }
     }
 }

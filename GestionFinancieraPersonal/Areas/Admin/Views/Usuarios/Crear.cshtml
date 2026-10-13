@@ -1,0 +1,39 @@
+﻿@model UsuarioCrearViewModel
+@{
+    ViewData["Title"] = "Nuevo usuario";
+}
+<div class="topbar">
+    <div><h1>Nuevo usuario</h1><p>Crear una cuenta desde el panel de administración</p></div>
+    <div class="role-badge desktop-only"><i class="ti ti-shield-check"></i>Administrador</div>
+</div>
+
+<form asp-action="Crear" method="post" class="card" style="max-width:520px;margin-top:12px;">
+    <div class="form-group">
+        <label asp-for="Nombre">Nombre completo</label>
+        <input asp-for="Nombre" type="text" placeholder="Nombre del usuario" />
+        <span asp-validation-for="Nombre" class="field-error"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Correo">Correo electrónico</label>
+        <input asp-for="Correo" type="text" placeholder="nombre@correo.com" />
+        <span asp-validation-for="Correo" class="field-error"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Contrasena">Contraseña inicial</label>
+        <input asp-for="Contrasena" type="password" placeholder="Mínimo 6 caracteres" />
+        <span asp-validation-for="Contrasena" class="field-error"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Rol">Rol</label>
+        <select asp-for="Rol">
+            <option value="Usuario">Usuario</option>
+            <option value="Administrador">Administrador</option>
+        </select>
+        <span asp-validation-for="Rol" class="field-error"></span>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <a asp-action="Index" class="btn btn-ghost">Cancelar</a>
+        <button type="submit" class="btn btn-primary">Crear usuario</button>
+    </div>
+</form>

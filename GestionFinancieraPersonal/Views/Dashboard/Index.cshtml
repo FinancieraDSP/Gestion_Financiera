@@ -4,7 +4,7 @@
 }
 <div class="topbar">
     <div><h1>Hola, @Model.NombreUsuario</h1><p>@Model.PeriodoActual</p></div>
-    <div class="bell desktop-only"><i class="ti ti-bell"></i></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 <div class="kpi-grid">

@@ -16,7 +16,7 @@
             <div class="mobile-topbar">
                 <button class="hamburger" id="btnMenu" aria-label="Abrir menú"><i class="ti ti-menu-2"></i></button>
                 <span class="mobile-topbar-title">@ViewData["Title"]</span>
-                <div class="bell"><i class="ti ti-bell"></i></div>
+                @await Component.InvokeAsync("Campana") 
             </div>
 
             <main class="main">
