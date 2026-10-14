@@ -4,9 +4,10 @@
 }
 <div class="topbar">
     <div><h1>Editar categoría</h1><p>Tipo: @Model.Tipo (no se puede cambiar)</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
-<form asp-controller="Categorias" asp-action="Editar" method="post" class="card" style="max-width:520px;margin-top:12px;">
+<form asp-controller="Categorias" asp-action="Editar" method="post" class="card form-narrow">
     <input type="hidden" asp-for="Id" />
     <input type="hidden" asp-for="Tipo" />
 

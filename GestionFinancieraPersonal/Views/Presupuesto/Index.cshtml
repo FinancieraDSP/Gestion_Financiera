@@ -11,6 +11,7 @@
 }
 <div class="topbar">
     <div><h1>Presupuesto mensual</h1><p>@Model.Periodo</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 @if (TempData["Exito"] is string exito)

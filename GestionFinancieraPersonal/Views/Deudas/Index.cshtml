@@ -21,6 +21,7 @@
 }
 <div class="topbar">
     <div><h1>Deudas</h1><p>Control de pagos pendientes</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 @if (TempData["Exito"] is string exito)
@@ -88,19 +89,21 @@
 {
     <div class="card" style="margin-top:16px;">
         <h2>Últimos pagos</h2>
-        <table class="data">
-            <tbody>
-            @foreach (var p in Model.PagosRecientes)
-            {
-                <tr>
-                    <td>@p.Fecha.ToString("dd/MM/yy")</td>
-                    <td>@p.Deuda</td>
-                    <td style="color:var(--text-muted);">@p.Descripcion</td>
-                    <td class="amount-neg">-@p.Monto.ToString("C")</td>
-                </tr>
-            }
-            </tbody>
-        </table>
+        <div class="data-scroll">
+            <table class="data">
+                <tbody>
+                @foreach (var p in Model.PagosRecientes)
+                {
+                    <tr>
+                        <td>@p.Fecha.ToString("dd/MM/yy")</td>
+                        <td>@p.Deuda</td>
+                        <td style="color:var(--text-muted);">@p.Descripcion</td>
+                        <td class="amount-neg">-@p.Monto.ToString("C")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     </div>
 }
 

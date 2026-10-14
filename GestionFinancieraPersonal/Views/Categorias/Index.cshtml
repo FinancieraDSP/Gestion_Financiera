@@ -9,6 +9,7 @@
 }
 <div class="topbar">
     <div><h1>Mis categorías</h1><p>Organiza tus ingresos y gastos a tu manera</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 @if (TempData["Exito"] is string exito)

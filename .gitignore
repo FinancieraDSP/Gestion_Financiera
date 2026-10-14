@@ -1,13 +1,18 @@
 # Visual Studio
 .vs/
 *.user
+*.suo
+
+# Editores
+.vscode/
 
 # Compilación
-bin/
-obj/
+[Bb]in/
+[Oo]bj/
 
 # Logs
 logs/
+*.log
 
 # Variables de entorno
 .env

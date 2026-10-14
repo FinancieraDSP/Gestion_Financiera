@@ -17,7 +17,9 @@
 <div class="grid-2">
     <div class="card">
         <h2>Gastos por categoría</h2>
-        @{ var maxCategoria = Model.GastosPorCategoria.Count == 0 ? 1 : Model.GastosPorCategoria.Values.Max(); }
+        @{
+            var maxCategoria = Model.GastosPorCategoria.Count == 0 ? 1 : Model.GastosPorCategoria.Values.Max();
+        }
         @foreach (var cat in Model.GastosPorCategoria)
         {
             var ancho = maxCategoria == 0 ? 0 : Math.Round((cat.Value / maxCategoria) * 100, 0);
@@ -29,16 +31,18 @@
     </div>
     <div class="card">
         <h2>Últimos registros</h2>
-        <table class="data">
-            <tbody>
-                @foreach (var g in Model.UltimosGastos)
-                {
-                    <tr>
-                        <td>@g.Descripcion</td>
-                        <td style="text-align:right;" class="amount-neg">-@g.Monto.ToString("C")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="data-scroll">
+            <table class="data">
+                <tbody>
+                    @foreach (var g in Model.UltimosGastos)
+                    {
+                        <tr>
+                            <td>@g.Descripcion</td>
+                            <td style="text-align:right;" class="amount-neg">-@g.Monto.ToString("C")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

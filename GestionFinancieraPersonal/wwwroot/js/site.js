@@ -18,3 +18,26 @@ document.addEventListener("DOMContentLoaded", function () {
     if (btnCerrar) btnCerrar.addEventListener("click", cerrarMenu);
     if (overlay) overlay.addEventListener("click", cerrarMenu);
 });
+
+// Pantalla "Sin conexión": se muestra al perder internet o si el servidor no responde.
+(function () {
+    var pantalla = document.getElementById("offlineScreen");
+    var btn = document.getElementById("btnReintentar");
+    if (!pantalla || !btn) return;
+
+    function mostrar() { pantalla.classList.add("visible"); }
+    function ocultar() { pantalla.classList.remove("visible"); }
+
+    function reintentar() {
+        btn.disabled = true;
+        fetch("/favicon.ico", { method: "HEAD", cache: "no-store" })
+            .then(function (r) { if (r.ok) ocultar(); else mostrar(); })
+            .catch(mostrar)
+            .then(function () { btn.disabled = false; });
+    }
+
+    window.addEventListener("offline", mostrar);
+    window.addEventListener("online", reintentar);
+    btn.addEventListener("click", reintentar);
+    if (!navigator.onLine) mostrar();
+})();

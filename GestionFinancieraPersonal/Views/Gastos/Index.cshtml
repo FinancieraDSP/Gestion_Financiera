@@ -7,6 +7,7 @@
 }
 <div class="topbar">
     <div><h1>Gestión de gastos</h1><p>Registro de salidas de dinero</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 @if (TempData["Exito"] is string exito)
@@ -19,31 +20,33 @@
 }
 
 <div class="card" style="padding:0;overflow:hidden;margin:12px 0 16px;">
-    <table class="data">
-        <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Cuenta</th><th>Monto</th><th></th></tr></thead>
-        <tbody>
-            @foreach (var g in Model.Items)
-            {
-                <tr>
-                    <td>@g.Fecha.ToString("dd/MM/yy")</td>
-                    <td>@g.Categoria.Nombre</td>
-                    <td>@g.Descripcion</td>
-                    <td>@g.Cuenta.Nombre</td>
-                    <td class="amount-neg">-@g.Monto.ToString("C")</td>
-                    <td>
-                        <form asp-controller="Gastos" asp-action="Eliminar" asp-route-id="@g.IdGasto" method="post"
-                              onsubmit="return confirm('¿Eliminar este gasto? Se devolverá el dinero a la cuenta.');" style="margin:0;">
-                            <button type="submit" class="btn-icon-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
-                        </form>
-                    </td>
-                </tr>
-            }
-            @if (!Model.Items.Any())
-            {
-                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:18px;">Aún no has registrado gastos.</td></tr>
-            }
-        </tbody>
-    </table>
+    <div class="data-scroll">
+        <table class="data">
+            <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Cuenta</th><th>Monto</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var g in Model.Items)
+                {
+                    <tr>
+                        <td>@g.Fecha.ToString("dd/MM/yy")</td>
+                        <td>@g.Categoria.Nombre</td>
+                        <td>@g.Descripcion</td>
+                        <td>@g.Cuenta.Nombre</td>
+                        <td class="amount-neg">-@g.Monto.ToString("C")</td>
+                        <td>
+                            <form asp-controller="Gastos" asp-action="Eliminar" asp-route-id="@g.IdGasto" method="post"
+                                  onsubmit="return confirm('¿Eliminar este gasto? Se devolverá el dinero a la cuenta.');" style="margin:0;">
+                                <button type="submit" class="btn-icon-danger" title="Eliminar"><i class="ti ti-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:18px;">Aún no has registrado gastos.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <form asp-controller="Gastos" asp-action="Registrar" method="post" class="card-dark">

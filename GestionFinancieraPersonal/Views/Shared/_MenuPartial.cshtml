@@ -5,7 +5,8 @@
 <aside class="sidebar" id="sidebarMenu">
     <div class="sidebar-top">
         <div class="logo">
-            <div class="mark"><i class="ti ti-wallet"></i></div>
+            <a class="@EsActivo("Dashboard")" asp-controller="Dashboard" asp-action="Index">
+                <div class="mark"><i class="ti ti-wallet"></i></div></a>
             <span>FinanzApp</span>
         </div>
         <a href="#" class="menu-close" id="btnCerrarMenu"><i class="ti ti-x"></i></a>
@@ -19,7 +20,7 @@
         <a class="@EsActivo("Presupuesto")" asp-controller="Presupuesto" asp-action="Index"><i class="ti ti-chart-pie"></i>Presupuesto</a>
         <a class="@EsActivo("Ahorro")" asp-controller="Ahorro" asp-action="Index"><i class="ti ti-moneybag"></i>Ahorro</a>
         <a class="@EsActivo("Deudas")" asp-controller="Deudas" asp-action="Index"><i class="ti ti-credit-card"></i>Deudas</a>
-        <a class="@EsActivo("AsistenteIA")" asp-controller="AsistenteIA" asp-action="Index"><i class="ti ti-message-chatbot"></i>Asistente IA</a>
+        <a class="@EsActivo("AsistenteIA")" asp-controller="AsistenteIA" asp-action="Recomendaciones"><i class="ti ti-message-chatbot"></i>Asistente IA</a>
     </nav>
 
     <div class="bottom">

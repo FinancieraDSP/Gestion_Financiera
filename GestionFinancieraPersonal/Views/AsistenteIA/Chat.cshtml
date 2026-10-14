@@ -1,9 +1,10 @@
 @model List<MensajeChat>
 @{
-    ViewData["Title"] = "Asistente IA";
+    ViewData["Title"] = "Chat IA";
 }
 <div class="topbar">
     <div><h1>Asistente financiero</h1><p>Responde según tus movimientos registrados</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 <div class="chat-window">
@@ -21,3 +22,7 @@
     <i class="ti ti-info-circle"></i>
     Este chat todavía no está conectado a un modelo real; por ahora muestra la conversación de ejemplo desde <code>DatosSimulados</code>.
 </p>
+
+<a asp-controller="AsistenteIA" asp-action="Recomendaciones" class="link-back">
+    <i class="ti ti-arrow-left"></i>Ver recomendaciones
+</a>

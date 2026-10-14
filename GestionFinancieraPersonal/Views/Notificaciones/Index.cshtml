@@ -12,6 +12,7 @@
 }
 <div class="topbar">
     <div><h1>Notificaciones</h1><p>Alertas de tu presupuesto, metas y deudas</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
 <div style="margin-top:12px;">
