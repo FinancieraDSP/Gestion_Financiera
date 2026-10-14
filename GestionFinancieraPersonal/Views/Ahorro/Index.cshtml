@@ -56,7 +56,7 @@
     <i class="ti ti-piggy-bank kpi-total-icon"></i>
 </div>
 
-<form asp-controller="Ahorro" asp-action="Aportar" method="post" class="card-dark" style="margin-top:16px;">
+<form asp-controller="Ahorro" asp-action="Aportar" method="post" class="card-dark card-dark-wide" style="margin-top:16px;">
     <h2>Aportar a una meta</h2>
     @if (!Model.MetasActivas.Any())
     {
@@ -87,7 +87,7 @@
     }
 </form>
 
-<form asp-controller="Ahorro" asp-action="CrearMeta" method="post" class="card-dark" style="margin-top:16px;">
+<form asp-controller="Ahorro" asp-action="CrearMeta" method="post" class="card-dark card-dark-wide" style="margin-top:16px;">
     <h2>Nueva meta</h2>
     <div class="form-row">
         <div class="form-group">

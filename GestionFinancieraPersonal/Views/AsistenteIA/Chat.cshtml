@@ -7,14 +7,14 @@
     @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
-<div class="chat-window">
+<div class="chat-window content-wide">
     @foreach (var m in Model)
     {
         <div class="bubble @(m.EsDelUsuario ? "user" : "bot")">@m.Texto</div>
     }
 </div>
 
-<form class="chat-input" onsubmit="return false;">
+<form class="chat-input content-wide" onsubmit="return false;">
     <input type="text" placeholder="Escribe tu pregunta..." />
     <button type="submit" class="chat-send"><i class="ti ti-send"></i></button>
 </form>

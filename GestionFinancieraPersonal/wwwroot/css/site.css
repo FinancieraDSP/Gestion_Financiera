@@ -314,7 +314,7 @@ table.data tbody tr:last-child td { border-bottom: none; }
 .login-forgot { text-align: right; margin-bottom: 16px; }
 .login-forgot span { font-size: 11px; color: var(--mint); cursor: pointer; }
 @media (min-width: 640px) {
-  .login-card { flex-direction: row; max-width: 640px; }
+  .login-card { flex-direction: row; max-width: clamp(700px, 74vw, 980px); }
   .login-left { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 40px 32px; }
   .login-right { flex: 1.2; display: flex; flex-direction: column; justify-content: center; padding: 40px 32px; }
 }
@@ -521,11 +521,11 @@ table.data tbody tr:last-child td { border-bottom: none; }
     line-height: 1.5;
 }
 
-/* Formularios angostos y centrados (cambio de contraseña, editar categoría) */
+/* Formularios de edición (cambio de contraseña, editar categoría) */
 .form-narrow {
     width: 100%;
-    max-width: 480px;
-    margin: 12px auto 0;
+    max-width: none;
+    margin: 12px 0 0;
 }
 
 @media (min-width: 900px) {
@@ -556,4 +556,17 @@ table.data tbody tr:last-child td { border-bottom: none; }
 
 .reco-list, .chat-window, .chat-input {
     max-width: 900px;
+}
+
+/* Escala amplia para pantallas grandes sin alterar la identidad visual */
+.card-dark.card-dark-wide {
+    width: 100%;
+    max-width: none;
+}
+
+.reco-list.content-wide,
+.chat-window.content-wide,
+.chat-input.content-wide {
+    width: 100%;
+    max-width: none;
 }

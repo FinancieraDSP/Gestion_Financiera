@@ -18,7 +18,7 @@
     @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
 
-<div class="reco-list">
+<div class="reco-list content-wide">
     @foreach (var r in Model)
     {
         var (icono, color) = Estilo(r.Tipo);
