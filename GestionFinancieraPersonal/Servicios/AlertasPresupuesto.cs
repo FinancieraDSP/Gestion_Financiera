@@ -1,18 +1,24 @@
-﻿using GestionFinancieraPersonal.Entidades;
+using GestionFinancieraPersonal.Entidades;
 namespace GestionFinancieraPersonal.Servicios
 {
 
-    //Decide si un gasto cruzo el limite
+    // Decide si un gasto cruzó el umbral configurado por el administrador (ConfiguracionSistema.UmbralPresupuesto)
+    // o el 100 % del límite. El umbral nunca se define aquí: siempre llega como parámetro.
     public class AlertasPresupuesto
     {
-        // % usado del presupuesto (sin redondear)
-        public static decimal Uso(Presupuesto p) =>
-            p.MontoLimite == 0 ? 0 : p.MontoGastado / p.MontoLimite * 100;
+        // Un presupuesto está "superado" al llegar al 100 % de su límite.
+        // No es un ajuste: es la definición de presupuesto agotado (el umbral configurable es otro, siempre menor).
+        private const decimal PorcentajeSuperado = 100;
 
-        // Devuelve una notificación solo si el uso CRUZÓ el 85% o el 100%; si no, null
-        public static Notificacion? Evaluar(int idUsuario, string categoria, decimal usoAntes, decimal usoDespues)
+        // % usado del presupuesto (sin redondear)
+        public static decimal Uso(Presupuesto p) => p.PorcentajeExacto;
+
+        // Devuelve una notificación solo si el uso CRUZÓ el umbral o el 100 %; si no, null.
+        // "Cruzar" = antes estaba por debajo y ahora está en o por encima. Con el uso ya por encima
+        // del umbral (72 %, 73 %, ...) usoAntes ya no es menor y no se genera otra notificación.
+        public static Notificacion? Evaluar(int idUsuario, string categoria, decimal usoAntes, decimal usoDespues, int umbral)
         {
-            if (usoAntes < 100 && usoDespues >= 100)
+            if (usoAntes < PorcentajeSuperado && usoDespues >= PorcentajeSuperado)
             {
                 return new Notificacion
                 {
@@ -23,14 +29,14 @@ namespace GestionFinancieraPersonal.Servicios
                 };
             }
 
-            if (usoAntes < Presupuesto.UmbralAlerta && usoDespues >= Presupuesto.UmbralAlerta)
+            if (!Presupuesto.Supera(usoAntes, umbral) && Presupuesto.Supera(usoDespues, umbral))
             {
                 return new Notificacion
                 {
                     IdUsuario = idUsuario,
                     Tipo = "Presupuesto",
                     Titulo = "Alerta de presupuesto",
-                    Mensaje = $"Has usado el {Math.Round(usoDespues, 0)}% del presupuesto de {categoria}."
+                    Mensaje = $"Has utilizado más del {umbral}% del presupuesto de {categoria}."
                 };
             }
 

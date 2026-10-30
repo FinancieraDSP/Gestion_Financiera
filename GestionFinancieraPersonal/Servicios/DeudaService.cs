@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+
+using Microsoft.EntityFrameworkCore;
 using GestionFinancieraPersonal.Datos;
 using GestionFinancieraPersonal.Entidades;
 using GestionFinancieraPersonal.Models;
@@ -9,11 +10,13 @@ namespace GestionFinancieraPersonal.Servicios
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<DeudaService> _logger;
+        private readonly ConfiguracionService _configuracion;
 
-        public DeudaService(ApplicationDbContext db, ILogger<DeudaService> logger)
+        public DeudaService(ApplicationDbContext db, ILogger<DeudaService> logger, ConfiguracionService configuracion)
         {
             _db = db;
             _logger = logger;
+            _configuracion = configuracion;
         }
 
         // El estado se deduce de los montos y de la fecha de vencimiento
@@ -37,10 +40,75 @@ namespace GestionFinancieraPersonal.Servicios
             }
             if (hayCambios) await _db.SaveChangesAsync();
 
+            // Ventana de "Por vencer" vigente (ConfiguracionSistema.DiasAvisoDeuda): Deuda.PorVencer la necesita
+            var diasAviso = (await _configuracion.ObtenerAsync()).DiasAvisoDeuda;
+            foreach (var d in deudas)
+                d.DiasAvisoAplicado = diasAviso;
+
             return deudas
                 .OrderBy(d => d.Estado == "Pagada")
                 .ThenBy(d => d.FechaVencimiento ?? DateTime.MaxValue)
                 .ToList();
+        }
+
+        // ================= AVISOS DE VENCIMIENTO (generación perezosa) =================
+        // Se invoca desde NotificacionService (la campana lo consulta en cada página). No hay tareas programadas:
+        // el aviso se crea la primera vez que el usuario abre la aplicación dentro de la ventana de aviso.
+        // Una sola notificación por deuda y fecha de vencimiento: la columna aviso_vencimiento_notificado
+        // guarda para qué vencimiento ya se avisó y se marca con un UPDATE atómico.
+        public async Task GenerarAvisosVencimientoAsync(int idUsuario)
+        {
+            try
+            {
+                var diasAviso = (await _configuracion.ObtenerAsync()).DiasAvisoDeuda; // siempre desde la BD
+                var hoy = DateTime.Today;
+                var limite = hoy.AddDays(diasAviso);
+
+                // Deudas sin pagar con vencimiento dentro de la ventana y sin aviso para ese vencimiento
+                var pendientes = await _db.Deudas.AsNoTracking()
+                    .Where(d => d.IdUsuario == idUsuario
+                                && d.MontoPagado < d.MontoTotal
+                                && d.FechaVencimiento != null
+                                && d.FechaVencimiento >= hoy && d.FechaVencimiento <= limite
+                                && (d.AvisoVencimientoNotificado == null || d.AvisoVencimientoNotificado != d.FechaVencimiento))
+                    .Select(d => new { d.IdDeuda, d.Nombre, d.FechaVencimiento })
+                    .ToListAsync();
+
+                foreach (var d in pendientes)
+                {
+                    await using var transaccion = await _db.Database.BeginTransactionAsync();
+
+                    // Solo la petición que consigue marcar la deuda crea la notificación (evita duplicados concurrentes)
+                    var marcadas = await _db.Deudas
+                        .Where(x => x.IdDeuda == d.IdDeuda
+                                    && (x.AvisoVencimientoNotificado == null || x.AvisoVencimientoNotificado != x.FechaVencimiento))
+                        .ExecuteUpdateAsync(s => s.SetProperty(x => x.AvisoVencimientoNotificado, x => x.FechaVencimiento));
+                    if (marcadas == 0) continue;
+
+                    var diasRestantes = (d.FechaVencimiento!.Value.Date - hoy).Days;
+                    var cuando = diasRestantes switch
+                    {
+                        0 => "vence hoy",
+                        1 => "vence en 1 día",
+                        _ => $"vence en {diasRestantes} días"
+                    };
+
+                    _db.Notificaciones.Add(new Notificacion
+                    {
+                        IdUsuario = idUsuario,
+                        Tipo = "Deuda",
+                        Titulo = "Deuda por vencer",
+                        Mensaje = $"La deuda {d.Nombre} {cuando}."
+                    });
+                    await _db.SaveChangesAsync();
+                    await transaccion.CommitAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Un fallo aquí nunca debe romper la página que renderiza la campana
+                _logger.LogError(ex, "Error al generar avisos de vencimiento del usuario {IdUsuario}", idUsuario);
+            }
         }
 
         public Task<List<PagoResumenViewModel>> ObtenerPagosRecientesAsync(int idUsuario, int cantidad = 8) =>
@@ -182,3 +250,4 @@ namespace GestionFinancieraPersonal.Servicios
         }
     }
 }
+

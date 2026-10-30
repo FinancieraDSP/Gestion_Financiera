@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using GestionFinancieraPersonal.Datos;
 using GestionFinancieraPersonal.Entidades;
@@ -10,11 +11,13 @@ namespace GestionFinancieraPersonal.Servicios
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<MovimientoService> _logger;
+        private readonly ConfiguracionService _configuracion;
 
-        public MovimientoService(ApplicationDbContext db, ILogger<MovimientoService> logger)
+        public MovimientoService(ApplicationDbContext db, ILogger<MovimientoService> logger, ConfiguracionService configuracion)
         {
             _db = db;
             _logger = logger;
+            _configuracion = configuracion;
         }
 
         // ================= CONSULTAS (siempre filtradas por usuario) =================
@@ -92,13 +95,15 @@ namespace GestionFinancieraPersonal.Servicios
                 cuenta.SaldoActual -= monto;
 
                 /* Regla: el gasto suma al presupuesto de esa categoría (si hay uno vigente en esa fecha)
-                 y, si cruza el 85% o el 100%, genera una notificación, las notificaciones se deberian guardar en el mismo SaveChanges que el gasto */
+                 y, si cruza el umbral configurado por el administrador o el 100%, genera una notificación,
+                 las notificaciones se guardan en el mismo SaveChanges que el gasto */
                 var presupuesto = await BuscarPresupuestoAsync(idUsuario, categoria.IdCategoria, fecha);
                 if (presupuesto != null)
                 {
+                    var umbral = (await _configuracion.ObtenerAsync()).UmbralPresupuesto; // siempre desde la BD
                     var usoAntes = AlertasPresupuesto.Uso(presupuesto);
                     presupuesto.MontoGastado += monto;
-                    var alerta = AlertasPresupuesto.Evaluar(idUsuario, categoria.Nombre, usoAntes, AlertasPresupuesto.Uso(presupuesto));
+                    var alerta = AlertasPresupuesto.Evaluar(idUsuario, categoria.Nombre, usoAntes, AlertasPresupuesto.Uso(presupuesto), umbral);
                     if (alerta != null) _db.Notificaciones.Add(alerta);
                 }
 
@@ -224,3 +229,4 @@ namespace GestionFinancieraPersonal.Servicios
                 p.PeriodoInicio <= fecha && p.PeriodoFin >= fecha);
     }
 }
+

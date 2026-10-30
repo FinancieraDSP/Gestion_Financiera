@@ -29,7 +29,9 @@ builder.Host.UseSerilog((contexto, configuracion) => configuracion
         shared: true,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}"));
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(o =>
+    o.Filters.Add<GestionFinancieraPersonal.Filtros.MantenimientoFilter>());
+
 
 // ---------- Base de datos (LocalDB) ----------
 var cadenaConexion = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -44,6 +46,8 @@ builder.Services.AddScoped<PresupuestoService>();
 builder.Services.AddScoped<NotificacionService>();
 builder.Services.AddScoped<AhorroService>();
 builder.Services.AddScoped<DeudaService>();
+builder.Services.AddScoped<ConfiguracionService>();
+builder.Services.AddScoped<MantenimientoService>();
 
 // ---------- Autenticación por cookie ----------
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -82,6 +86,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         InicializadorBD.CrearBaseSiNoExiste(cadenaConexion);
+        ActualizadorEsquema.Aplicar(cadenaConexion);
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         InicializadorBD.SembrarDatos(db);
     }

@@ -1,0 +1,72 @@
+@using GestionFinancieraPersonal.Servicios
+@model GestionFinancieraPersonal.ViewComponents.MantenimientoAdminModelo
+@{
+    var i = Model.Info;
+    var enCurso = i.Estado == EstadoMantenimiento.EnCurso;
+    var (etiqueta, clase) = i.Estado switch
+    {
+        EstadoMantenimiento.Programado => ("Programado", "ok"),
+        EstadoMantenimiento.EnCurso => ("En curso", "warn"),
+        EstadoMantenimiento.Finalizado => ("Finalizado", "ok"),
+        _ => ("Sin programar", "ok")
+    };
+    var hoy = DateTime.Today.ToString("yyyy-MM-dd");
+    string? minInicio = enCurso ? null : hoy;   // un mantenimiento en curso conserva su inicio
+}
+@* Debe ir FUERA del <form> de ajustes (los formularios no se pueden anidar) *@
+<div class="card-dark card-dark-wide">
+    <h2>
+        <i class="ti ti-tool" style="color:var(--mint);margin-right:6px;"></i>Mantenimiento programado
+        <span class="pill @clase" style="margin-left:8px;">@etiqueta</span>
+    </h2>
+
+    @if (!string.IsNullOrEmpty(Model.Exito))
+    {
+        <div class="alert success"><i class="ti ti-circle-check"></i>@Model.Exito</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert danger"><i class="ti ti-alert-circle"></i>@Model.Error</div>
+    }
+
+    <form id="frmMantGuardar" asp-area="Admin" asp-controller="ProgramacionMantenimiento" asp-action="Guardar" method="post" style="margin-top:10px;">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Fecha de inicio</label>
+                <input name="FechaInicio" type="date" required min="@minInicio" readonly="@enCurso" value="@(i.Inicio?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="form-group">
+                <label>Hora de inicio</label>
+                <input name="HoraInicio" type="time" required readonly="@enCurso" value="@(i.Inicio?.ToString("HH:mm"))" />
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Fecha de finalización</label>
+                <input name="FechaFin" type="date" required min="@hoy" value="@(i.Fin?.ToString("yyyy-MM-dd"))" />
+            </div>
+            <div class="form-group">
+                <label>Hora de finalización</label>
+                <input name="HoraFin" type="time" required value="@(i.Fin?.ToString("HH:mm"))" />
+            </div>
+        </div>
+    </form>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+        @if (i.Estado != EstadoMantenimiento.SinProgramar)
+        {
+            <form asp-area="Admin" asp-controller="ProgramacionMantenimiento" asp-action="Cancelar" method="post" style="margin:0;"
+                  onsubmit="return confirm('¿Cancelar la programación de mantenimiento?');">
+                <button type="submit" class="btn btn-ghost-dark">Cancelar programación</button>
+            </form>
+        }
+        @if (enCurso)
+        {
+            <form asp-area="Admin" asp-controller="ProgramacionMantenimiento" asp-action="Finalizar" method="post" style="margin:0;"
+                  onsubmit="return confirm('¿Finalizar el mantenimiento ahora? Los usuarios podrán ingresar de inmediato.');">
+                <button type="submit" class="btn btn-ghost-dark">Finalizar ahora</button>
+            </form>
+        }
+        <button type="submit" form="frmMantGuardar" class="btn btn-primary">Guardar programación</button>
+    </div>
+</div>

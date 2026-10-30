@@ -15,6 +15,9 @@ namespace GestionFinancieraPersonal.Controllers
     [AllowAnonymous]
     public class AccountController : Controller
     {
+        private const string MensajeCuentaBloqueada =
+            "Tu cuenta ha sido bloqueada debido a demasiados intentos fallidos de acceso. Contacta con un administrador.";
+
         private readonly ApplicationDbContext _db;
         private readonly ILogger<AccountController> _logger;
         private readonly UsuarioService _usuarios;
@@ -56,13 +59,20 @@ namespace GestionFinancieraPersonal.Controllers
                     _hasher.VerifyHashedPassword(usuario, usuario.PasswordHash, modelo.Contrasena) == PasswordVerificationResult.Failed)
                 {
                     _logger.LogWarning("Intento de inicio de sesión fallido para {Correo}", correo);
-                    modelo.MensajeError = "Correo o contraseña incorrectos.";
+
+                    // Fase 2: cuenta el intento (admins y cuentas ya bloqueadas no cuentan).
+                    // Si este intento alcanza el límite configurado, se bloquea y se avisa.
+                    var seBloqueo = usuario != null && await _usuarios.RegistrarIntentoFallidoAsync(correo);
+
+                    modelo.MensajeError = seBloqueo
+                        ? MensajeCuentaBloqueada
+                        : "Correo o contraseña incorrectos.";
                     return View(modelo);
                 }
 
                 if (!usuario.Estado)
                 {
-                    modelo.MensajeError = "Tu cuenta está bloqueada. Contacta al administrador.";
+                    modelo.MensajeError = MensajeCuentaBloqueada;
                     return View(modelo);
                 }
 
@@ -71,6 +81,9 @@ namespace GestionFinancieraPersonal.Controllers
                     modelo.MensajeError = $"Esta cuenta no tiene acceso como {modelo.TipoAcceso}.";
                     return View(modelo);
                 }
+
+                // Login completo y exitoso: único punto donde se reinicia el contador
+                await _usuarios.ReiniciarIntentosAsync(usuario.IdUsuario);
 
                 await IniciarSesion(usuario, usuario.Rol.Nombre);
                 _logger.LogInformation("Inicio de sesión: {Correo} ({Rol})", usuario.Correo, usuario.Rol.Nombre);

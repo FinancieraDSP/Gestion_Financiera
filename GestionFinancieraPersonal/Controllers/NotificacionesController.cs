@@ -2,14 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using GestionFinancieraPersonal.Servicios;
 
-//AL ABRIR LA PAGINA SE MUESTRAN LAS NO LEIDAS RESALTADAS Y LUEGO SE MARCAN COMO LEIDAS
 namespace GestionFinancieraPersonal.Controllers
 {
-
     [Authorize(Roles = "Usuario")]
     public class NotificacionesController : Controller
     {
-
         private readonly NotificacionService _servicio;
 
         public NotificacionesController(NotificacionService servicio)
@@ -20,10 +17,45 @@ namespace GestionFinancieraPersonal.Controllers
         // GET: /Notificaciones
         public async Task<IActionResult> Index()
         {
-            var idUsuario = User.ObtenerIdUsuario();
-            var lista = await _servicio.ObtenerAsync(idUsuario); // foto con el estado "leída" de antes
-            await _servicio.MarcarTodasLeidasAsync(idUsuario);
-            return View(lista);
+            return View(await _servicio.ObtenerAsync(User.ObtenerIdUsuario()));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarLeida(int id)
+        {
+            await _servicio.MarcarLeidaAsync(User.ObtenerIdUsuario(), id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarTodasLeidas()
+        {
+            await _servicio.MarcarTodasLeidasAsync(User.ObtenerIdUsuario());
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Eliminar(int id)
+        {
+            await _servicio.EliminarAsync(User.ObtenerIdUsuario(), id);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EliminarTodas()
+        {
+            var n = await _servicio.EliminarTodasAsync(User.ObtenerIdUsuario());
+
+            TempData["Exito"] =
+                n > 0
+                    ? "Se eliminaron todas las notificaciones."
+                    : "No había notificaciones.";
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

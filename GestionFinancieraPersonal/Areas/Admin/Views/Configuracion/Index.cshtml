@@ -1,68 +1,79 @@
+@using GestionFinancieraPersonal.Entidades
 @model ConfiguracionSistema
 @{
     ViewData["Title"] = "Configuración del sistema";
+    string Err(string campo) => ViewData.ModelState[campo]?.Errors.FirstOrDefault()?.ErrorMessage ?? "";
+    string Invalido(string campo) => Err(campo) != "" ? "invalid" : "";
 }
 <div class="topbar">
     <div><h1>Configuración del sistema</h1><p>Parámetros generales de la plataforma</p></div>
     <div class="role-badge desktop-only"><i class="ti ti-shield-check"></i>Administrador</div>
 </div>
 
+@if (TempData["Exito"] is string exito)
+{
+    <div class="alert success" style="margin-bottom:12px;"><i class="ti ti-circle-check"></i>@exito</div>
+}
+@if (TempData["Error"] is string errorTemp)
+{
+    <div class="alert danger" style="margin-bottom:12px;"><i class="ti ti-alert-circle"></i>@errorTemp</div>
+}
+
 <form asp-action="Guardar" method="post">
     <div class="card">
         <h2><i class="ti ti-bell-ringing" style="color:var(--mint);margin-right:6px;"></i>Alertas y notificaciones</h2>
         <div class="settings-row">
-            <div><p class="settings-title">Umbral de alerta de presupuesto</p><p class="settings-sub">% de uso a partir del cual se notifica</p></div>
-            <input type="text" asp-for="UmbralAlertaPresupuesto" />
+            <div>
+                <p class="settings-title">Umbral de alerta de presupuesto</p>
+                <p class="settings-sub">Se notifica al superar este % del presupuesto (@LimitesConfiguracion.UmbralMin a @LimitesConfiguracion.UmbralMax)</p>
+            </div>
+            <div class="settings-control">
+                <div class="input-unit @Invalido("UmbralPresupuesto")">
+                    <input asp-for="UmbralPresupuesto" type="number" step="1" required
+                           min="@LimitesConfiguracion.UmbralMin" max="@LimitesConfiguracion.UmbralMax" />
+                    <span class="unit">%</span>
+                </div>
+                <span class="field-error">@Err("UmbralPresupuesto")</span>
+            </div>
         </div>
         <div class="settings-row">
-            <div><p class="settings-title">Aviso de vencimiento de deudas</p><p class="settings-sub">Días de anticipación</p></div>
-            <input type="text" asp-for="DiasAvisoVencimientoDeudas" />
+            <div>
+                <p class="settings-title">Aviso de vencimiento de deudas</p>
+                <p class="settings-sub">Días de anticipación (@LimitesConfiguracion.DiasAvisoMin a @LimitesConfiguracion.DiasAvisoMax)</p>
+            </div>
+            <div class="settings-control">
+                <div class="input-unit @Invalido("DiasAvisoDeuda")">
+                    <input asp-for="DiasAvisoDeuda" type="number" step="1" required
+                           min="@LimitesConfiguracion.DiasAvisoMin" max="@LimitesConfiguracion.DiasAvisoMax" />
+                    <span class="unit">días</span>
+                </div>
+                <span class="field-error">@Err("DiasAvisoDeuda")</span>
+            </div>
         </div>
     </div>
 
     <div class="card">
         <h2><i class="ti ti-shield-lock" style="color:var(--mint);margin-right:6px;"></i>Seguridad y acceso</h2>
         <div class="settings-row">
-            <div><p class="settings-title">Tiempo de sesión inactiva</p><p class="settings-sub">Minutos antes de cerrar sesión</p></div>
-            <input type="text" asp-for="MinutosSesionInactiva" />
-        </div>
-        <div class="settings-row">
-            <div><p class="settings-title">Intentos de acceso permitidos</p><p class="settings-sub">Antes de bloquear la cuenta</p></div>
-            <input type="text" asp-for="IntentosAccesoPermitidos" />
-        </div>
-    </div>
-
-    <div class="card-dark card-dark-wide">
-        <h2><i class="ti ti-database" style="color:var(--mint);margin-right:6px;"></i>Mantenimiento</h2>
-        <div class="settings-row">
-            <span class="settings-title">Modo mantenimiento</span>
-            <button type="button" class="switch @(Model.ModoMantenimiento ? "on" : "off")"><span class="knob"></span></button>
-            <input type="hidden" asp-for="ModoMantenimiento" />
-        </div>
-        <div class="settings-row">
-            <span class="settings-title">Respaldo automático de base de datos</span>
-            <button type="button" class="switch @(Model.RespaldoAutomatico ? "on" : "off")"><span class="knob"></span></button>
-            <input type="hidden" asp-for="RespaldoAutomatico" />
+            <div>
+                <p class="settings-title">Intentos de acceso permitidos</p>
+                <p class="settings-sub">Fallos antes de bloquear la cuenta (@LimitesConfiguracion.IntentosMin a @LimitesConfiguracion.IntentosMax)</p>
+            </div>
+            <div class="settings-control">
+                <div class="input-unit @Invalido("IntentosPermitidos")">
+                    <input asp-for="IntentosPermitidos" type="number" step="1" required
+                           min="@LimitesConfiguracion.IntentosMin" max="@LimitesConfiguracion.IntentosMax" />
+                    <span class="unit">intentos</span>
+                </div>
+                <span class="field-error">@Err("IntentosPermitidos")</span>
+            </div>
         </div>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-        <button type="reset" class="btn btn-ghost">Restaurar valores</button>
+        <button type="reset" class="btn btn-ghost">Descartar cambios</button>
         <button type="submit" class="btn btn-primary">Guardar cambios</button>
     </div>
 </form>
-
-@section Scripts {
-<script>
-    // Alterna visualmente los switches y sincroniza el input hidden antes de enviar.
-    document.querySelectorAll('.switch').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            var input = btn.parentElement.querySelector('input[type="hidden"]');
-            var activo = btn.classList.contains('on');
-            btn.classList.toggle('on', !activo);
-            btn.classList.toggle('off', activo);
-            if (input) input.value = (!activo).toString();
-        });
-    });
-</script>
-}
+<br/>
+@await Component.InvokeAsync("MantenimientoAdmin")

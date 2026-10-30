@@ -25,6 +25,10 @@ CREATE TABLE Usuarios (
     password_hash VARCHAR(255) NOT NULL,
     fecha_registro DATETIME2 NOT NULL DEFAULT GETDATE(),
     estado BIT NOT NULL DEFAULT 1,
+    intentos_fallidos INT NOT NULL DEFAULT 0,
+
+    CONSTRAINT CK_Usuarios_IntentosFallidos
+        CHECK (intentos_fallidos >= 0),
 
     CONSTRAINT FK_Usuarios_Roles
         FOREIGN KEY (id_rol)
@@ -216,6 +220,7 @@ CREATE TABLE Notificaciones (
     tipo VARCHAR(50) NOT NULL,
     fecha DATETIME2 NOT NULL DEFAULT GETDATE(),
     leida BIT NOT NULL DEFAULT 0,
+    eliminada BIT NOT NULL DEFAULT 0,
 
     CONSTRAINT FK_Notificaciones_Usuarios
         FOREIGN KEY (id_usuario)
@@ -259,6 +264,7 @@ CREATE TABLE Deudas (
     tasa_interes DECIMAL(5,2) NOT NULL DEFAULT 0,
     fecha_inicio DATE NOT NULL,
     fecha_vencimiento DATE NULL,
+    aviso_vencimiento_notificado DATE NULL,
     estado VARCHAR(20) NOT NULL,
 
     CONSTRAINT CK_Deudas_MontoTotal
@@ -307,4 +313,37 @@ CREATE TABLE PagosDeuda (
         FOREIGN KEY (id_cuenta)
         REFERENCES Cuentas(id_cuenta)
 );
+GO
+
+/*configuracion del sistema (una sola fila, id = 1)*/
+
+CREATE TABLE ConfiguracionSistema (
+    id_configuracion INT NOT NULL PRIMARY KEY,
+    umbral_presupuesto INT NOT NULL DEFAULT 85,
+    dias_aviso_deuda INT NOT NULL DEFAULT 3,
+    intentos_permitidos INT NOT NULL DEFAULT 5,
+    mantenimiento_activo BIT NOT NULL DEFAULT 0,
+    fecha_inicio_mantenimiento DATETIME2 NULL,
+    fecha_fin_mantenimiento DATETIME2 NULL,
+
+    CONSTRAINT CK_Config_UnicaFila
+        CHECK (id_configuracion = 1),
+
+    CONSTRAINT CK_Config_Umbral
+        CHECK (umbral_presupuesto BETWEEN 50 AND 99),
+
+    CONSTRAINT CK_Config_DiasAviso
+        CHECK (dias_aviso_deuda BETWEEN 1 AND 30),
+
+    CONSTRAINT CK_Config_Intentos
+        CHECK (intentos_permitidos BETWEEN 2 AND 10),
+
+    CONSTRAINT CK_Config_FechasMantenimiento
+        CHECK (fecha_inicio_mantenimiento IS NULL
+               OR fecha_fin_mantenimiento IS NULL
+               OR fecha_fin_mantenimiento > fecha_inicio_mantenimiento)
+);
+GO
+
+INSERT INTO ConfiguracionSistema (id_configuracion) VALUES (1);
 GO

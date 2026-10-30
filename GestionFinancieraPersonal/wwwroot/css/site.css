@@ -570,3 +570,18 @@ table.data tbody tr:last-child td { border-bottom: none; }
     width: 100%;
     max-width: none;
 }
+
+.notif-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    margin:12px 0;
+}
+
+.notif-item-actions {
+    display:flex;
+    align-items:center;
+    gap:4px;
+    flex-shrink:0;
+}

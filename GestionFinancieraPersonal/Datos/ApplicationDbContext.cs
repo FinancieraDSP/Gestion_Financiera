@@ -20,6 +20,7 @@ namespace GestionFinancieraPersonal.Datos
         public DbSet<Recomendacion> Recomendaciones { get; set; } = null!;
         public DbSet<Deuda> Deudas { get; set; } = null!;
         public DbSet<PagoDeuda> PagosDeuda { get; set; } = null!;
+        public DbSet<Configuracion> Configuraciones { get; set; } = null!;
 
         // Antes de guardar, se validan las anotaciones de cada entidad nueva o modificada.
         // Si alguna falla se lanza una ValidationException y no se guarda nada.

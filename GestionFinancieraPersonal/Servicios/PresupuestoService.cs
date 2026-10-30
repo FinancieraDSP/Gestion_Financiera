@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+
+using Microsoft.EntityFrameworkCore;
 using GestionFinancieraPersonal.Datos;
 using GestionFinancieraPersonal.Entidades;
 using GestionFinancieraPersonal.Models;
@@ -9,11 +10,13 @@ namespace GestionFinancieraPersonal.Servicios
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<PresupuestoService> _logger;
+        private readonly ConfiguracionService _configuracion;
 
-        public PresupuestoService(ApplicationDbContext db, ILogger<PresupuestoService> logger)
+        public PresupuestoService(ApplicationDbContext db, ILogger<PresupuestoService> logger, ConfiguracionService configuracion)
         {
             _db = db;
             _logger = logger;
+            _configuracion = configuracion;
         }
 
         // Los presupuestos son mensuales: del día 1 al último día del mes actual
@@ -31,11 +34,20 @@ namespace GestionFinancieraPersonal.Servicios
                 p.IdUsuario == idUsuario && p.Estado && p.PeriodoInicio <= fin && p.PeriodoFin >= inicio);
         }
 
-        public Task<List<Presupuesto>> ObtenerDelMesAsync(int idUsuario) =>
-            PresupuestosDelMes(idUsuario).AsNoTracking()
+        // Devuelve los presupuestos del mes con el umbral vigente ya asignado (Presupuesto.EnAlerta lo necesita)
+        public async Task<List<Presupuesto>> ObtenerDelMesAsync(int idUsuario)
+        {
+            var presupuestos = await PresupuestosDelMes(idUsuario).AsNoTracking()
                 .Include(p => p.Categoria)
                 .OrderBy(p => p.Categoria.Nombre)
                 .ToListAsync();
+
+            var umbral = (await _configuracion.ObtenerAsync()).UmbralPresupuesto;
+            foreach (var p in presupuestos)
+                p.UmbralAplicado = umbral;
+
+            return presupuestos;
+        }
 
         // Crea el presupuesto del mes para la categoría, o actualiza su límite si ya existe
         public async Task<ResultadoOperacion> GuardarAsync(int idUsuario, PresupuestoFormViewModel f)
@@ -81,7 +93,8 @@ namespace GestionFinancieraPersonal.Servicios
                     presupuesto.MontoGastado = gastado;
                 }
 
-                var alerta = AlertasPresupuesto.Evaluar(idUsuario, categoria.Nombre, usoAntes, AlertasPresupuesto.Uso(presupuesto));
+                var umbral = (await _configuracion.ObtenerAsync()).UmbralPresupuesto; // siempre desde la BD
+                var alerta = AlertasPresupuesto.Evaluar(idUsuario, categoria.Nombre, usoAntes, AlertasPresupuesto.Uso(presupuesto), umbral);
                 if (alerta != null) _db.Notificaciones.Add(alerta);
 
                 await _db.SaveChangesAsync();
@@ -114,3 +127,4 @@ namespace GestionFinancieraPersonal.Servicios
         }
     }
 }
+

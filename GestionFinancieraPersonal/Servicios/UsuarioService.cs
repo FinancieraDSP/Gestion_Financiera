@@ -10,12 +10,14 @@ namespace GestionFinancieraPersonal.Servicios
     {
         private readonly ApplicationDbContext _db;
         private readonly ILogger<UsuarioService> _logger;
+        private readonly ConfiguracionService _configuracion;
         private readonly PasswordHasher<Usuario> _hasher = new();
 
-        public UsuarioService(ApplicationDbContext db, ILogger<UsuarioService> logger)
+        public UsuarioService(ApplicationDbContext db, ILogger<UsuarioService> logger, ConfiguracionService configuracion)
         {
             _db = db;
             _logger = logger;
+            _configuracion = configuracion;
         }
 
         // ================= CREAR (registro público y creación desde Admin) =================
@@ -61,6 +63,70 @@ namespace GestionFinancieraPersonal.Servicios
             }
         }
 
+        // ================= INTENTOS DE ACCESO =================
+
+        /// <summary>
+        /// Registra una contraseña incorrecta para el correo indicado.
+        /// Devuelve true SOLO si este intento provocó el bloqueo automático de la cuenta.
+        /// No hace nada (devuelve false) si el correo no existe, la cuenta ya está bloqueada
+        /// o el usuario es administrador (exentos del bloqueo automático).
+        /// El límite se lee siempre de ConfiguracionSistema.
+        /// </summary>
+        public async Task<bool> RegistrarIntentoFallidoAsync(string correo)
+        {
+            try
+            {
+                correo = correo.Trim();
+
+                var objetivo = await _db.Usuarios.AsNoTracking()
+                    .Where(u => u.Correo == correo)
+                    .Select(u => new { u.IdUsuario, u.Estado, Rol = u.Rol.Nombre })
+                    .FirstOrDefaultAsync();
+
+                if (objetivo == null || !objetivo.Estado || objetivo.Rol == "Administrador")
+                    return false;
+
+                var limite = (await _configuracion.ObtenerAsync()).IntentosPermitidos;
+                var id = objetivo.IdUsuario;
+
+                // Incremento atómico: evita perder intentos si llegan peticiones simultáneas
+                await _db.Usuarios
+                    .Where(u => u.IdUsuario == id && u.Estado)
+                    .ExecuteUpdateAsync(s => s.SetProperty(u => u.IntentosFallidos, u => u.IntentosFallidos + 1));
+
+                // ">=" y no "==": si el admin baja el límite en caliente, el siguiente fallo ya bloquea
+                var bloqueados = await _db.Usuarios
+                    .Where(u => u.IdUsuario == id && u.Estado && u.IntentosFallidos >= limite)
+                    .ExecuteUpdateAsync(s => s.SetProperty(u => u.Estado, false));
+
+                if (bloqueados > 0)
+                    _logger.LogWarning("Cuenta bloqueada automáticamente por intentos fallidos: {Correo} (límite {Limite})", correo, limite);
+
+                return bloqueados > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al registrar intento fallido para {Correo}", correo);
+                return false;
+            }
+        }
+
+        /// <summary>Reinicia el contador. Se llama solo tras un login completo y exitoso.</summary>
+        public async Task ReiniciarIntentosAsync(int idUsuario)
+        {
+            try
+            {
+                await _db.Usuarios
+                    .Where(u => u.IdUsuario == idUsuario && u.IntentosFallidos != 0)
+                    .ExecuteUpdateAsync(s => s.SetProperty(u => u.IntentosFallidos, 0));
+            }
+            catch (Exception ex)
+            {
+                // Un fallo aquí no debe impedir que el usuario entre
+                _logger.LogError(ex, "Error al reiniciar intentos fallidos del usuario {IdUsuario}", idUsuario);
+            }
+        }
+
         // ================= BLOQUEAR / DESBLOQUEAR =================
 
         public async Task<ResultadoOperacion> CambiarEstadoAsync(int idUsuario, bool activo)
@@ -73,6 +139,11 @@ namespace GestionFinancieraPersonal.Servicios
                     return ResultadoOperacion.Fallo("No se pueden modificar cuentas de administrador.");
 
                 usuario.Estado = activo;
+
+                // Desbloqueo manual: Estado = true e IntentosFallidos = 0
+                if (activo)
+                    usuario.IntentosFallidos = 0;
+
                 await _db.SaveChangesAsync();
                 _logger.LogInformation("Usuario {Correo} {Accion}", usuario.Correo, activo ? "desbloqueado" : "bloqueado");
                 return ResultadoOperacion.Ok();
@@ -99,6 +170,7 @@ namespace GestionFinancieraPersonal.Servicios
                 var temporal = RandomNumberGenerator.GetString(caracteres, 10);
 
                 usuario.PasswordHash = _hasher.HashPassword(usuario, temporal);
+                usuario.IntentosFallidos = 0; // restablecer contraseña reinicia el contador
                 await _db.SaveChangesAsync();
                 return (ResultadoOperacion.Ok(), temporal, usuario.Correo);
             }

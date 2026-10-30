@@ -58,6 +58,9 @@ namespace GestionFinancieraPersonal.Entidades
 
         [ForeignKey(nameof(IdRol))]
         public Rol Rol { get; set; } = null!;
+
+        [Column("intentos_fallidos")]
+        public int IntentosFallidos { get; set; }
     }
 
     [Table("Cuentas")]
@@ -200,8 +203,6 @@ namespace GestionFinancieraPersonal.Entidades
     [Table("Presupuestos")]
     public class Presupuesto : IValidatableObject
     {
-        public const int UmbralAlerta = 85;
-
         [Key, Column("id_presupuesto")]
         public int IdPresupuesto { get; set; }
 
@@ -231,8 +232,21 @@ namespace GestionFinancieraPersonal.Entidades
         [ForeignKey(nameof(IdCategoria))]
         public Categoria Categoria { get; set; } = null!;
 
+        // % redondeado: solo para mostrar en pantalla (barras, etiquetas)
         [NotMapped] public decimal Porcentaje => MontoLimite == 0 ? 0 : Math.Round(MontoGastado / MontoLimite * 100, 0);
-        [NotMapped] public bool EnAlerta => Porcentaje >= UmbralAlerta;
+
+        // % sin redondear: es el que se compara contra el umbral (el mismo valor que usan las notificaciones)
+        [NotMapped] public decimal PorcentajeExacto => MontoLimite == 0 ? 0 : MontoGastado / MontoLimite * 100;
+
+        // Umbral vigente (ConfiguracionSistema.UmbralPresupuesto). Lo asigna PresupuestoService.ObtenerDelMesAsync;
+        // no se guarda en la tabla y no tiene valor por defecto: si nadie lo asigna, EnAlerta es false.
+        [NotMapped] public int? UmbralAplicado { get; set; }
+
+        [NotMapped] public bool EnAlerta => UmbralAplicado.HasValue && Supera(PorcentajeExacto, UmbralAplicado.Value);
+
+        // Única regla de comparación con el umbral (la usan EnAlerta y las notificaciones).
+        // ">=": entra en alerta al llegar al umbral. Para exigir "estrictamente más", cambiar solo este operador.
+        public static bool Supera(decimal uso, int umbral) => uso >= umbral;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -320,6 +334,9 @@ namespace GestionFinancieraPersonal.Entidades
 
         [Column("leida")]
         public bool Leida { get; set; }
+
+        [Column("eliminada")]
+        public bool Eliminada { get; set; }
     }
 
     [Table("Recomendaciones")]
@@ -396,16 +413,27 @@ namespace GestionFinancieraPersonal.Entidades
         [Column("fecha_vencimiento", TypeName = "date")]
         public DateTime? FechaVencimiento { get; set; }
 
+        // Fecha de vencimiento para la que ya se envió el aviso "Deuda por vencer".
+        // Evita duplicados: se avisa solo si es distinta de FechaVencimiento.
+        [Column("aviso_vencimiento_notificado", TypeName = "date")]
+        public DateTime? AvisoVencimientoNotificado { get; set; }
+
         [Column("estado")]
         [Required]
         [RegularExpression("^(Pendiente|En proceso|Pagada|Vencida)$", ErrorMessage = "Estado de deuda no válido.")]
         public string Estado { get; set; } = "Pendiente";
 
         [NotMapped] public decimal MontoPendiente => MontoTotal - MontoPagado;
+
+        // Ventana vigente (ConfiguracionSistema.DiasAvisoDeuda). Lo asigna DeudaService.ObtenerAsync;
+        // no se guarda en la tabla y no tiene valor por defecto: si nadie lo asigna, PorVencer es false.
+        [NotMapped] public int? DiasAvisoAplicado { get; set; }
+
         [NotMapped]
         public bool PorVencer =>
-            FechaVencimiento.HasValue &&
-            (FechaVencimiento.Value - DateTime.Today).TotalDays is >= 0 and <= 7;
+            FechaVencimiento.HasValue && DiasAvisoAplicado.HasValue &&
+            (FechaVencimiento.Value.Date - DateTime.Today).TotalDays >= 0 &&
+            (FechaVencimiento.Value.Date - DateTime.Today).TotalDays <= DiasAvisoAplicado.Value;
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
