@@ -9,6 +9,8 @@ using GestionFinancieraPersonal.Datos;
 using GestionFinancieraPersonal.Entidades;
 using GestionFinancieraPersonal.Models;
 using GestionFinancieraPersonal.Servicios;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace GestionFinancieraPersonal.Controllers
 {
@@ -22,12 +24,18 @@ namespace GestionFinancieraPersonal.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly UsuarioService _usuarios;
         private readonly PasswordHasher<Usuario> _hasher = new();
+        private readonly EmailService _email;
 
-        public AccountController(ApplicationDbContext db, ILogger<AccountController> logger, UsuarioService usuarios)
+        public AccountController(
+        ApplicationDbContext db,
+        ILogger<AccountController> logger,
+        UsuarioService usuarios,
+        EmailService email)
         {
             _db = db;
             _logger = logger;
             _usuarios = usuarios;
+            _email = email;
         }
 
         // ---------- LOGIN ----------
@@ -95,6 +103,142 @@ namespace GestionFinancieraPersonal.Controllers
                 modelo.MensajeError = "Ocurrió un error al iniciar sesión. Intenta de nuevo.";
                 return View(modelo);
             }
+        }
+
+        // ---------- PASSWORD ----------
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View(new ForgotPasswordViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(
+            ForgotPasswordViewModel modelo)
+        {
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            var usuario = await _db.Usuarios
+                .FirstOrDefaultAsync(u => u.Correo == modelo.Correo);
+
+            if (usuario != null)
+            {
+                var token = Guid.NewGuid().ToString();
+
+                using var sha = SHA256.Create();
+
+                var hashBytes = sha.ComputeHash(
+                    System.Text.Encoding.UTF8.GetBytes(token));
+
+                var hash = Convert.ToHexString(hashBytes);
+
+                await _db.PasswordResets
+                    .Where(p => p.IdUsuario == usuario.IdUsuario && !p.Usado)
+                    .ExecuteUpdateAsync(s =>
+                        s.SetProperty(x => x.Usado, true));
+
+                _db.PasswordResets.Add(new PasswordReset
+                {
+                    IdUsuario = usuario.IdUsuario,
+                    TokenHash = hash,
+                    FechaCreacion = DateTime.Now,
+                    FechaExpiracion = DateTime.Now.AddMinutes(15),
+                    Usado = false
+                });
+
+                await _db.SaveChangesAsync();
+
+                var enlace =
+                    $"{Request.Scheme}://{Request.Host}/Account/ResetPassword?token={token}";
+
+                await _email.EnviarRecuperacionAsync(
+                    usuario.Correo,
+                    enlace);
+            }
+
+            ModelState.Clear();
+
+            modelo.Correo = string.Empty;
+
+            modelo.MensajeExito =
+                "Si existe una cuenta asociada a ese correo, se enviarán instrucciones de recuperación.";
+
+            return View(modelo);
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction(nameof(Login));
+
+            return View(new ResetPasswordViewModel
+            {
+                Token = token
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(
+            ResetPasswordViewModel modelo)
+        {
+            if (!ModelState.IsValid)
+                return View(modelo);
+
+            using var sha = SHA256.Create();
+
+            var tokenHash = Convert.ToHexString(
+                sha.ComputeHash(
+                    Encoding.UTF8.GetBytes(modelo.Token)));
+
+            var reset = await _db.PasswordResets
+                .FirstOrDefaultAsync(r =>
+                    r.TokenHash == tokenHash &&
+                    !r.Usado);
+
+            if (reset == null)
+            {
+                modelo.MensajeError =
+                    "El enlace de recuperación no es válido.";
+                return View(modelo);
+            }
+
+            if (reset.FechaExpiracion < DateTime.Now)
+            {
+                modelo.MensajeError =
+                    "El enlace de recuperación ha expirado.";
+                return View(modelo);
+            }
+
+            var usuario = await _db.Usuarios
+                .FirstOrDefaultAsync(u =>
+                    u.IdUsuario == reset.IdUsuario);
+
+            if (usuario == null)
+            {
+                modelo.MensajeError =
+                    "El usuario asociado no existe.";
+                return View(modelo);
+            }
+
+            usuario.PasswordHash =
+                _hasher.HashPassword(
+                    usuario,
+                    modelo.NuevaContrasena);
+
+            usuario.IntentosFallidos = 0;
+
+            reset.Usado = true;
+
+            await _db.SaveChangesAsync();
+
+            TempData["Exito"] =
+                "Tu contraseña fue actualizada correctamente.";
+
+            return RedirectToAction(nameof(Login));
         }
 
         // ---------- REGISTRO ----------

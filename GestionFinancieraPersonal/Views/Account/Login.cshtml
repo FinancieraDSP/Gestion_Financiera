@@ -13,6 +13,14 @@
         <p class="login-title">Iniciar sesión</p>
         <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
 
+        @if (TempData["Exito"] is string exito)
+        {
+            <div class="alert success">
+                <i class="ti ti-circle-check"></i>
+                @exito
+            </div>
+        }
+
         <form asp-controller="Account" asp-action="Login" method="post" novalidate>
             <div class="login-tabs">
                 <label><input type="radio" asp-for="TipoAcceso" value="Usuario" />Usuario</label>
@@ -35,7 +43,11 @@
                 <div class="alert danger"><i class="ti ti-alert-circle"></i>@Model.MensajeError</div>
             }
 
-            <div class="login-forgot"><span>¿Olvidaste tu contraseña?</span></div>
+            <div class="login-forgot">
+                <a asp-action="ForgotPassword">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            </div>
 
             <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
 

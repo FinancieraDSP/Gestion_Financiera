@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using GestionFinancieraPersonal.Datos;
+using GestionFinancieraPersonal.Models;
 using GestionFinancieraPersonal.Servicios;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -38,9 +39,14 @@ var cadenaConexion = builder.Configuration.GetConnectionString("DefaultConnectio
     ?? throw new InvalidOperationException("Falta la cadena de conexión 'DefaultConnection'.");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(cadenaConexion));
 
+// ---------- Configuración de correo electrónico ----------
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings"));
+
 // ---------- Servicios de la aplicación (capa de lógica de negocio) ----------
 builder.Services.AddScoped<MovimientoService>();
 builder.Services.AddScoped<UsuarioService>();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<CategoriaService>();
 builder.Services.AddScoped<PresupuestoService>();
 builder.Services.AddScoped<NotificacionService>();

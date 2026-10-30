@@ -465,4 +465,31 @@ namespace GestionFinancieraPersonal.Entidades
         [StringLength(200, ErrorMessage = "La descripción admite máximo 200 caracteres.")]
         public string? Descripcion { get; set; }
     }
+[Table("PasswordResets")]
+public class PasswordReset
+{
+    [Key]
+    [Column("id_reset")]
+    public int IdReset { get; set; }
+
+    [Column("id_usuario")]
+    public int IdUsuario { get; set; }
+
+    [Column("token_hash")]
+    [Required]
+    [StringLength(255)]
+    public string TokenHash { get; set; } = string.Empty;
+
+    [Column("fecha_creacion")]
+    public DateTime FechaCreacion { get; set; }
+
+    [Column("fecha_expiracion")]
+    public DateTime FechaExpiracion { get; set; }
+
+    [Column("usado")]
+    public bool Usado { get; set; }
+
+    [ForeignKey(nameof(IdUsuario))]
+    public Usuario Usuario { get; set; } = null!;
+    }
 }
