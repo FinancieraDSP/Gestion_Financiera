@@ -16,3 +16,19 @@ logs/
 
 # Variables de entorno
 .env
+
+# appsettings.Development.json con credenciales para EmailSettings
+appsettings.Development.json
+
+# Configuración local
+appsettings.Development.json
+
+# User secrets locales
+secrets.json
+
+# Archivos temporales
+*.tmp
+*.bak
+
+# SQL de pruebas
+Fase*_Pruebas.sql

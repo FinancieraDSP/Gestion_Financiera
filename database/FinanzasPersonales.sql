@@ -347,3 +347,22 @@ GO
 
 INSERT INTO ConfiguracionSistema (id_configuracion) VALUES (1);
 GO
+
+CREATE TABLE PasswordResets (
+    id_reset INT IDENTITY(1,1) PRIMARY KEY,
+
+    id_usuario INT NOT NULL,
+
+    token_hash NVARCHAR(255) NOT NULL,
+
+    fecha_creacion DATETIME2 NOT NULL,
+
+    fecha_expiracion DATETIME2 NOT NULL,
+
+    usado BIT NOT NULL DEFAULT 0,
+
+    CONSTRAINT FK_PasswordResets_Usuarios
+        FOREIGN KEY (id_usuario)
+        REFERENCES Usuarios(id_usuario)
+);
+GO
