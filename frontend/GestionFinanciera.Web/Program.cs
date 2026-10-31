@@ -1,9 +1,11 @@
-using System.Globalization;
+using Azure.Storage.Blobs;
 using GestionFinancieraPersonal.Filtros;
 using GestionFinancieraPersonal.Servicios;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Serilog;
 using Serilog.Events;
+using System.Globalization;
 
 // Cultura fija: decimales con punto y montos con $
 var cultura = new CultureInfo("en-US");
@@ -35,6 +37,16 @@ builder.Services.AddControllersWithViews(o =>
 
 // ---------- Cliente de la API ----------
 builder.Services.AddHttpContextAccessor();
+// ---------- Llaves de sesión (Data Protection) ----------
+// En Azure se guardan en Blob Storage para que sobrevivan a reinicios y despliegues.
+// Sin esta variable (por ejemplo en tu PC con Docker), se usa el volumen local como hasta ahora.
+var blobKeys = builder.Configuration["DataProtection:BlobConnectionString"];
+if (!string.IsNullOrWhiteSpace(blobKeys))
+{
+    builder.Services.AddDataProtection()
+        .SetApplicationName("FinanzApp.Web")
+        .PersistKeysToAzureBlobStorage(new BlobClient(blobKeys, "dataprotection", "keys.xml"));
+}
 builder.Services.AddHttpClient<ApiClient>(cliente =>
 {
     var urlApi = builder.Configuration["Api:BaseUrl"]
