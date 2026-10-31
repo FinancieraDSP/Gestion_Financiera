@@ -71,8 +71,7 @@ namespace GestionFinancieraPersonal.Datos
 
         public static void Aplicar(string cadenaConexion)
         {
-            using var conexion = new SqlConnection(cadenaConexion);
-            conexion.Open();
+            using var conexion = ConexionConReintentos.Abrir(cadenaConexion);
 
             foreach (var paso in Pasos)
             {

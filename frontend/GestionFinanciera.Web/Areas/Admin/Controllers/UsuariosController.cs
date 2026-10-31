@@ -82,19 +82,6 @@ namespace GestionFinancieraPersonal.Areas.Admin.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: /Admin/Usuarios/Restablecer/3
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Restablecer(int id)
-        {
-            var resultado = await _api.PostAsync<RestablecerContrasenaResponse>($"api/admin/usuarios/{id}/restablecer-contrasena");
-            if (resultado.Exito && resultado.Datos != null)
-                TempData["Exito"] = $"Contraseña temporal de {resultado.Datos.Correo}: {resultado.Datos.Clave}  (solo se muestra ahora, compártela con el usuario).";
-            else
-                TempData["Error"] = resultado.Error;
-            return RedirectToAction(nameof(Index));
-        }
-
         // POST: /Admin/Usuarios/Eliminar/3
         [HttpPost]
         [ValidateAntiForgeryToken]

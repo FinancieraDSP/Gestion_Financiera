@@ -14,13 +14,6 @@ namespace GestionFinancieraPersonal.Models
         public List<CategoriaGeneral> Categorias { get; set; } = new();
     }
 
-    // Contraseña temporal generada por el administrador (solo se muestra una vez)
-    public class RestablecerContrasenaResponse
-    {
-        public string Clave { get; set; } = string.Empty;
-        public string Correo { get; set; } = string.Empty;
-    }
-
     public class ProgramarMantenimientoRequest
     {
         public DateTime Inicio { get; set; }

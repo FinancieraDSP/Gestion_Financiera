@@ -63,16 +63,6 @@ namespace GestionFinancieraPersonal.Controllers.Admin
         public async Task<IActionResult> Desbloquear(int id) =>
             this.Respuesta(await _usuarios.CambiarEstadoAsync(id, true));
 
-        // POST /api/admin/usuarios/3/restablecer-contrasena
-        [HttpPost("{id:int}/restablecer-contrasena")]
-        public async Task<IActionResult> RestablecerContrasena(int id)
-        {
-            var (resultado, clave, correo) = await _usuarios.RestablecerContrasenaAsync(id);
-            if (!resultado.Exito) return this.Respuesta(resultado);
-
-            return Ok(new RestablecerContrasenaResponse { Clave = clave!, Correo = correo! });
-        }
-
         // DELETE /api/admin/usuarios/3
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Eliminar(int id) =>

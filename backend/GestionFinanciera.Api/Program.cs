@@ -58,7 +58,7 @@ builder.Services.AddScoped<TokenService>();
 
 // ---------- Autenticación JWT ----------
 var jwt = builder.Configuration.GetSection("Jwt");
-var claveJwt = jwt["Key"] ?? throw new InvalidOperationException("Falta 'Jwt:Key' (user-secrets o variable de entorno).");
+var claveJwt = jwt["Key"] ?? throw new InvalidOperationException("Falta 'Jwt:Key' (appsettings.Development.json o variable de entorno).");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
@@ -97,19 +97,19 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// ---------- Crear BD y datos iniciales al arrancar (igual que antes) ----------
+// ---------- Crear BD y datos iniciales al arrancar ----------
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
     try
     {
         InicializadorBD.CrearBaseSiNoExiste(cadenaConexion);
         ActualizadorEsquema.Aplicar(cadenaConexion);
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        InicializadorBD.SembrarDatos(db);
+        InicializadorBD.SembrarDatos(db, app.Configuration, logger);
     }
     catch (Exception ex)
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         logger.LogCritical(ex, "No se pudo inicializar la base de datos.");
         throw;
     }
@@ -121,6 +121,23 @@ app.UseExceptionHandler(errores => errores.Run(async contexto =>
     contexto.Response.StatusCode = StatusCodes.Status500InternalServerError;
     await contexto.Response.WriteAsJsonAsync(new ErrorApi { Mensaje = "Error interno del servidor." });
 }));
+
+// ---------- Azure SQL serverless: despertar la BD si estuvo en pausa ----------
+// Si pasaron más de 3 minutos sin actividad, la primera petición confirma (con reintentos) que la BD responde.
+// Va ANTES de la autenticación porque la validación del token ya consulta la base.
+// /health se excluye a propósito: no toca la BD, así los chequeos de Docker/Azure no la mantienen despierta
+// (cada despertar consume vCore-segundos de tu cuota gratuita).
+var ultimaConexionOk = DateTime.MinValue;
+app.Use(async (contexto, siguiente) =>
+{
+    var esHealth = contexto.Request.Path.StartsWithSegments("/health");
+    if (!esHealth && DateTime.UtcNow - ultimaConexionOk > TimeSpan.FromMinutes(3))
+    {
+        await using var conexion = await ConexionConReintentos.AbrirAsync(cadenaConexion, contexto.RequestAborted);
+        ultimaConexionOk = DateTime.UtcNow;
+    }
+    await siguiente();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

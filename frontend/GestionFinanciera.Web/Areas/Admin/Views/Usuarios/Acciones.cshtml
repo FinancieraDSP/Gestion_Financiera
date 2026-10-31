@@ -20,7 +20,7 @@
         @if (esAdmin)
         {
             <p style="font-size:11px;color:var(--text-muted);margin:10px 0 14px;">
-                Las cuentas de administrador no se pueden bloquear, restablecer ni eliminar desde este panel.
+                Las cuentas de administrador no se pueden bloquear ni eliminar desde este panel.
             </p>
         }
         else
@@ -40,10 +40,6 @@
                         <button type="submit" class="modal-action-btn positive"><i class="ti ti-lock-open"></i>Desbloquear cuenta</button>
                     </form>
                 }
-                <form asp-action="Restablecer" asp-route-id="@Model.Id" method="post"
-                      onsubmit="return confirm('Se generará una contraseña temporal y la actual dejará de funcionar. ¿Continuar?');">
-                    <button type="submit" class="modal-action-btn neutral"><i class="ti ti-key"></i>Restablecer contraseña</button>
-                </form>
                 <form asp-action="Eliminar" asp-route-id="@Model.Id" method="post"
                       onsubmit="return confirm('Se eliminará la cuenta y TODOS sus datos (cuentas, ingresos, gastos, metas, deudas). Esta acción no se puede deshacer. ¿Continuar?');">
                     <button type="submit" class="modal-action-btn negative"><i class="ti ti-trash"></i>Eliminar cuenta</button>

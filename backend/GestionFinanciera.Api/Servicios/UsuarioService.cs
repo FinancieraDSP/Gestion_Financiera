@@ -155,32 +155,6 @@ namespace GestionFinancieraPersonal.Servicios
             }
         }
 
-        // ================= RESTABLECER CONTRASEÑA =================
-
-        public async Task<(ResultadoOperacion resultado, string? clave, string? correo)> RestablecerContrasenaAsync(int idUsuario)
-        {
-            try
-            {
-                var usuario = await _db.Usuarios.Include(u => u.Rol).FirstOrDefaultAsync(u => u.IdUsuario == idUsuario);
-                if (usuario == null) return (ResultadoOperacion.Fallo("El usuario no existe."), null, null);
-                if (usuario.Rol.Nombre == "Administrador")
-                    return (ResultadoOperacion.Fallo("No se pueden modificar cuentas de administrador."), null, null);
-
-                const string caracteres = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-                var temporal = RandomNumberGenerator.GetString(caracteres, 10);
-
-                usuario.PasswordHash = _hasher.HashPassword(usuario, temporal);
-                usuario.IntentosFallidos = 0; // restablecer contraseña reinicia el contador
-                await _db.SaveChangesAsync();
-                return (ResultadoOperacion.Ok(), temporal, usuario.Correo);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al restablecer contraseña del usuario {IdUsuario}", idUsuario);
-                return (ResultadoOperacion.Fallo("No se pudo restablecer la contraseña."), null, null);
-            }
-        }
-
         // ================= CAMBIAR CONTRASEÑA (la hace el propio usuario) =================
 
         public async Task<ResultadoOperacion> CambiarContrasenaAsync(int idUsuario, string actual, string nueva)

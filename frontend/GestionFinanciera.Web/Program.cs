@@ -40,7 +40,7 @@ builder.Services.AddHttpClient<ApiClient>(cliente =>
     var urlApi = builder.Configuration["Api:BaseUrl"]
         ?? throw new InvalidOperationException("Falta 'Api:BaseUrl'.");
     cliente.BaseAddress = new Uri(urlApi);
-    cliente.Timeout = TimeSpan.FromSeconds(30);
+    cliente.Timeout = TimeSpan.FromSeconds(90); // la 1.ª petición tras una pausa de Azure SQL puede tardar
 });
 
 // ---------- Autenticación por cookie (guarda el token JWT de la API dentro de la cookie cifrada) ----------
