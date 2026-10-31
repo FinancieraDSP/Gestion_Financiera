@@ -1,0 +1,42 @@
+name: finanzapp
+
+services:
+  api:
+    image: finanzapp-api:local
+    build:
+      context: .
+      dockerfile: backend/GestionFinanciera.Api/Dockerfile
+    ports:
+      - "5100:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Los "__" equivalen a ":" en la configuración (son los mismos nombres que usaremos en Azure)
+      ConnectionStrings__DefaultConnection: ${SQL_CONNECTION_STRING:?Falta SQL_CONNECTION_STRING en el archivo .env}
+      Jwt__Key: ${JWT_KEY:?Falta JWT_KEY en el archivo .env}
+      Frontend__BaseUrl: ${FRONTEND_BASE_URL:-http://localhost:5224}
+      EmailSettings__SmtpServer: ${EMAIL_SMTP_SERVER:-}
+      EmailSettings__Port: ${EMAIL_PORT:-587}
+      EmailSettings__SenderEmail: ${EMAIL_SENDER_EMAIL:-}
+      EmailSettings__SenderName: ${EMAIL_SENDER_NAME:-}
+      EmailSettings__Password: ${EMAIL_PASSWORD:-}
+    restart: unless-stopped
+
+  web:
+    image: finanzapp-web:local
+    build:
+      context: .
+      dockerfile: frontend/GestionFinanciera.Web/Dockerfile
+    ports:
+      - "5224:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Dentro de la red de Docker, el Web llama a la API por el nombre del servicio
+      Api__BaseUrl: http://api:8080/
+    depends_on:
+      - api
+    volumes:
+      - web-keys:/home/app/.aspnet/DataProtection-Keys
+    restart: unless-stopped
+
+volumes:
+  web-keys:

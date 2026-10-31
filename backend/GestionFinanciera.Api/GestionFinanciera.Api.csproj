@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Content Include="..\..\database\FinanzasPersonales.sql" Link="Datos\Script\FinanzasPersonales.sql">
+		<Content Include="../../database/FinanzasPersonales.sql" Link="Datos/Script/FinanzasPersonales.sql">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
