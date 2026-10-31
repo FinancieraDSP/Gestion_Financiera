@@ -55,6 +55,7 @@ builder.Services.AddScoped<DeudaService>();
 builder.Services.AddScoped<ConfiguracionService>();
 builder.Services.AddScoped<MantenimientoService>();
 builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<GestionFinancieraPersonal.Servicios.IAiService, GestionFinancieraPersonal.Servicios.AzureOpenAiService>();
 
 // ---------- Autenticación JWT ----------
 var jwt = builder.Configuration.GetSection("Jwt");
