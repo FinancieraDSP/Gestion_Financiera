@@ -1,4 +1,4 @@
-﻿@using GestionFinancieraPersonal.Entidades
+@using GestionFinancieraPersonal.Entidades
 @using GestionFinancieraPersonal.Servicios
 @model List<Recomendacion>
 @{
@@ -14,9 +14,19 @@
     };
 }
 <div class="topbar">
-    <div><h1>Recomendaciones para ti</h1><p>Generadas con base en tus movimientos de @FormatoFechas.MesAnio(DateTime.Today)</p></div>
+    <div>
+        <h1>Recomendaciones para ti</h1>
+        <p>Generadas con base en tus movimientos</p>
+    </div>
     @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
 </div>
+
+<form asp-action="GenerarRecomendaciones" method="post" style="margin-bottom:16px;">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-primary">
+        <i class="ti ti-sparkles"></i> Generar nuevas recomendaciones
+    </button>
+</form>
 
 <div class="reco-list content-wide">
     @foreach (var r in Model)
@@ -32,7 +42,11 @@
     }
     @if (!Model.Any())
     {
-        <div class="card"><p class="note" style="margin:0;">Aún no hay recomendaciones para mostrar.</p></div>
+        <div class="card">
+            <p class="note" style="margin:0;">
+                Aún no hay recomendaciones. Haz clic en “Generar nuevas recomendaciones”.
+            </p>
+        </div>
     }
 </div>
 

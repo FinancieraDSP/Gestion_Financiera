@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using GestionFinancieraPersonal.Models;
 using GestionFinancieraPersonal.Servicios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,17 +18,17 @@ namespace GestionFinancieraPersonal.Controllers
         public AsistenteController(IAiService ai) => _ai = ai;
 
         // El id sale del token JWT, nunca de lo que envía el navegador
-        private int IdUsuario => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        private int IdUsuario => User.ObtenerIdUsuario();
 
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] ChatRequest? req)
         {
             if (req is null || string.IsNullOrWhiteSpace(req.Mensaje))
-                return BadRequest("El mensaje es obligatorio.");
+                return BadRequest(new ErrorApi { Mensaje = "El mensaje es obligatorio." });
 
             var mensaje = req.Mensaje.Trim();
             if (mensaje.Length > MaxCaracteresMensaje)
-                return BadRequest($"El mensaje no puede superar {MaxCaracteresMensaje} caracteres.");
+                return BadRequest(new ErrorApi { Mensaje = $"El mensaje no puede superar {MaxCaracteresMensaje} caracteres." });
 
             var respuesta = await _ai.ChatAsync(IdUsuario, mensaje);
             return Ok(new { respuesta });
