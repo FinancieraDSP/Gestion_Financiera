@@ -1,0 +1,28 @@
+@model List<MensajeChat>
+@{
+    ViewData["Title"] = "Chat IA";
+}
+<div class="topbar">
+    <div><h1>Asistente financiero</h1><p>Responde según tus movimientos registrados</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
+</div>
+
+<div class="chat-window content-wide">
+    @foreach (var m in Model)
+    {
+        <div class="bubble @(m.EsDelUsuario ? "user" : "bot")">@m.Texto</div>
+    }
+</div>
+
+<form class="chat-input content-wide" onsubmit="return false;">
+    <input type="text" placeholder="Escribe tu pregunta..." />
+    <button type="submit" class="chat-send"><i class="ti ti-send"></i></button>
+</form>
+<p class="note" style="margin-top:8px;">
+    <i class="ti ti-info-circle"></i>
+    Este chat todavía no está conectado a un modelo real; por ahora muestra la conversación de ejemplo desde <code>DatosSimulados</code>.
+</p>
+
+<a asp-controller="AsistenteIA" asp-action="Recomendaciones" class="link-back">
+    <i class="ti ti-arrow-left"></i>Ver recomendaciones
+</a>

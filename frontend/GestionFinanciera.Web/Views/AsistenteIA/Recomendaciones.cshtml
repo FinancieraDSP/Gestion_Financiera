@@ -1,0 +1,41 @@
+﻿@using GestionFinancieraPersonal.Entidades
+@using GestionFinancieraPersonal.Servicios
+@model List<Recomendacion>
+@{
+    ViewData["Title"] = "Recomendaciones IA";
+    (string icono, string color) Estilo(string tipo) => tipo switch
+    {
+        "Gasto" => ("ti-trending-down", "mint"),
+        "Ahorro" => ("ti-piggy-bank", "navy"),
+        "Recurrente" => ("ti-repeat", "red"),
+        "Deuda" => ("ti-credit-card", "red"),
+        "Presupuesto" => ("ti-chart-pie", "navy"),
+        _ => ("ti-sparkles", "navy")
+    };
+}
+<div class="topbar">
+    <div><h1>Recomendaciones para ti</h1><p>Generadas con base en tus movimientos de @FormatoFechas.MesAnio(DateTime.Today)</p></div>
+    @await Component.InvokeAsync("Campana", new { claseExtra = "desktop-only" })
+</div>
+
+<div class="reco-list content-wide">
+    @foreach (var r in Model)
+    {
+        var (icono, color) = Estilo(r.Tipo);
+        <div class="card reco-card">
+            <div class="reco-icon @color"><i class="ti @icono"></i></div>
+            <div>
+                <p class="reco-title">@r.Titulo</p>
+                <p class="reco-text">@r.Contenido</p>
+            </div>
+        </div>
+    }
+    @if (!Model.Any())
+    {
+        <div class="card"><p class="note" style="margin:0;">Aún no hay recomendaciones para mostrar.</p></div>
+    }
+</div>
+
+<a asp-controller="AsistenteIA" asp-action="Chat" class="btn btn-ghost btn-block" style="margin-top:14px;">
+    <i class="ti ti-message-chatbot" style="color:var(--mint);"></i>Preguntarle al asistente
+</a>

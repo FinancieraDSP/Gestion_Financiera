@@ -1,0 +1,49 @@
+﻿@model RegistroViewModel
+@{
+    ViewData["Title"] = "Crear cuenta";
+    Layout = "_LoginLayout";
+}
+<div class="login-card">
+    <div class="login-left">
+        <div class="mark login-mark"><i class="ti ti-wallet"></i></div>
+        <p class="login-brand">Gestión financiera</p>
+        <p class="login-tagline">Crea tu cuenta y empieza a controlar tus ingresos, gastos y metas de ahorro.</p>
+    </div>
+    <div class="login-right">
+        <p class="login-title">Crear cuenta</p>
+        <p class="login-subtitle">Completa tus datos para registrarte</p>
+
+        <form asp-controller="Account" asp-action="Registro" method="post" novalidate>
+            <div class="form-group">
+                <label asp-for="Nombre">Nombre completo</label>
+                <input asp-for="Nombre" type="text" placeholder="Tu nombre" />
+                <span asp-validation-for="Nombre" class="field-error"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Correo">Correo electrónico</label>
+                <input asp-for="Correo" type="text" placeholder="nombre@correo.com" />
+                <span asp-validation-for="Correo" class="field-error"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Contrasena">Contraseña</label>
+                <input asp-for="Contrasena" type="password" placeholder="Mínimo 6 caracteres" />
+                <span asp-validation-for="Contrasena" class="field-error"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ConfirmarContrasena">Confirmar contraseña</label>
+                <input asp-for="ConfirmarContrasena" type="password" placeholder="Repite la contraseña" />
+                <span asp-validation-for="ConfirmarContrasena" class="field-error"></span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.MensajeError))
+            {
+                <div class="alert danger"><i class="ti ti-alert-circle"></i>@Model.MensajeError</div>
+            }
+
+            <button type="submit" class="btn btn-primary btn-block">Registrarme</button>
+            <p class="login-subtitle" style="margin:14px 0 0;text-align:center;">
+                ¿Ya tienes cuenta? <a asp-action="Login" style="color:var(--mint);">Inicia sesión</a>
+            </p>
+        </form>
+    </div>
+</div>

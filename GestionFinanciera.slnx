@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/GestionFinanciera.Api/GestionFinanciera.Api.csproj" />
+  </Folder>
+  <Folder Name="/frontend/">
+    <Project Path="frontend/GestionFinanciera.Web/GestionFinanciera.Web.csproj" />
+  </Folder>
+  <Folder Name="/shared/">
+    <Project Path="shared/GestionFinanciera.Shared/GestionFinanciera.Shared.csproj" />
+  </Folder>
+</Solution>

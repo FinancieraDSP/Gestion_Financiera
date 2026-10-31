@@ -1,0 +1,17 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+    Layout = "_LoginLayout";
+}
+<div class="login-card">
+    <div class="login-right" style="text-align:center;">
+        <div style="font-size:42px;color:var(--red);"><i class="ti ti-alert-triangle"></i></div>
+        <p class="login-title">Algo salió mal</p>
+        <p class="login-subtitle">Ocurrió un error inesperado. Ya quedó registrado para que podamos revisarlo. Puedes volver al inicio e intentar de nuevo.</p>
+        @if (Model.ShowRequestId)
+        {
+            <p class="login-subtitle">Código de referencia: <code>@Model.RequestId</code></p>
+        }
+        <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-block">Volver al inicio</a>
+    </div>
+</div>
