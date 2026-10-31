@@ -1,8 +1,0 @@
-﻿@model GestionFinancieraPersonal.ViewComponents.CampanaModelo
-<a asp-controller="Notificaciones" asp-action="Index" class="bell @Model.ClaseExtra" title="Notificaciones">
-    <i class="ti ti-bell"></i>
-    @if (Model.NoLeidas > 0)
-    {
-        <span class="bell-badge">@(Model.NoLeidas > 9 ? "9+" : Model.NoLeidas.ToString())</span>
-    }
-</a>
